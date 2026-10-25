@@ -61,7 +61,7 @@ helios-cad-forge/
 Requires Node.js 18+ (zero `npm` runtime dependencies):
 
 ```bash
-# Run the 69-test unit and DOM smoke suite
+# Run the 70-test unit and DOM smoke suite
 npm test
 
 # Deterministically regenerate all STL, OpenSCAD, KiCad 8, and BOM artifacts

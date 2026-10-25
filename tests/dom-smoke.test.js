@@ -558,3 +558,25 @@ test('package.json has zero runtime dependencies and no devDependencies', () => 
   assert.deepEqual(pkg.dependencies, {});
   assert.equal(pkg.devDependencies, undefined);
 });
+
+test('Copy .SCAD reports a refused clipboard write instead of throwing or claiming success', async () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  App.initWorkbench(doc, E, HW);
+  const btn = elementsById['btn-copy-scad'];
+  const saved = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const restore = () => { if (saved) Object.defineProperty(globalThis, 'navigator', saved); else delete globalThis.navigator; };
+  try {
+    let written = null;
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { clipboard: { writeText: (t) => { written = t; return Promise.resolve(); } } } });
+    btn.click();
+    await new Promise((r) => setImmediate(r));
+    assert.ok(written && written.includes('module_mm'), 'the SCAD source was written');
+    assert.equal(btn.textContent, 'Copied .SCAD');
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { clipboard: { writeText: () => Promise.reject(new Error('denied')) } } });
+    btn.click();
+    await new Promise((r) => setImmediate(r));
+    assert.equal(btn.textContent, 'Copy blocked, use the download button');
+  } finally {
+    restore();
+  }
+});

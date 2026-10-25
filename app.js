@@ -1060,13 +1060,20 @@
       if (copyScadBtn) {
         copyScadBtn.addEventListener('click', function () {
           var code = E.exportScad(getParams());
-          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(code);
+          function show(label) {
+            copyScadBtn.textContent = label;
+            setTimeout(function () {
+              copyScadBtn.textContent = 'Copy .SCAD to Clipboard';
+            }, 1400);
           }
-          copyScadBtn.textContent = 'Copied .SCAD';
-          setTimeout(function () {
-            copyScadBtn.textContent = 'Copy .SCAD to Clipboard';
-          }, 1400);
+          // Only say "Copied" once the browser confirms it; a refused write used to throw uncaught.
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            return Promise.resolve()
+              .then(function () { return navigator.clipboard.writeText(code); })
+              .then(function () { show('Copied .SCAD'); }, function () { show('Copy blocked, use the download button'); });
+          }
+          show('Copy blocked, use the download button');
+          return Promise.resolve();
         });
       }
 
