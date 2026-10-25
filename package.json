@@ -1,0 +1,12 @@
+{
+  "name": "helios-cad-forge",
+  "version": "1.0.0",
+  "description": "Helios-6 parametric solar tracker: OpenSCAD source, STL meshes, KiCad telemetry node and an in-browser CAD workbench.",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/",
+    "build": "node tools/build-artifacts.js"
+  },
+  "dependencies": {}
+}

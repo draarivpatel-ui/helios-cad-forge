@@ -1,0 +1,2385 @@
+{
+ "Resistor_SMD:R_0603_1608Metric": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -0.825,
+    "y": 0.0,
+    "r": 0,
+    "w": 0.8,
+    "h": 0.95,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "2",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 0.825,
+    "y": 0.0,
+    "r": 0,
+    "w": 0.8,
+    "h": 0.95,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   }
+  ],
+  "courtyard": [
+   -1.48,
+   -0.73,
+   1.48,
+   0.73
+  ],
+  "attr": [
+   "smd"
+  ]
+ },
+ "Capacitor_SMD:C_0603_1608Metric": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -0.775,
+    "y": 0.0,
+    "r": 0,
+    "w": 0.9,
+    "h": 0.95,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "2",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 0.775,
+    "y": 0.0,
+    "r": 0,
+    "w": 0.9,
+    "h": 0.95,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   }
+  ],
+  "courtyard": [
+   -1.48,
+   -0.73,
+   1.48,
+   0.73
+  ],
+  "attr": [
+   "smd"
+  ]
+ },
+ "Resistor_SMD:R_1206_3216Metric": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.4625,
+    "y": 0.0,
+    "r": 0,
+    "w": 1.125,
+    "h": 1.75,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.222222
+   },
+   {
+    "n": "2",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.4625,
+    "y": 0.0,
+    "r": 0,
+    "w": 1.125,
+    "h": 1.75,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.222222
+   }
+  ],
+  "courtyard": [
+   -2.28,
+   -1.13,
+   2.28,
+   1.13
+  ],
+  "attr": [
+   "smd"
+  ]
+ },
+ "LED_SMD:LED_0805_2012Metric": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -0.9375,
+    "y": 0.0,
+    "r": 0,
+    "w": 0.975,
+    "h": 1.4,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "2",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 0.9375,
+    "y": 0.0,
+    "r": 0,
+    "w": 0.975,
+    "h": 1.4,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   }
+  ],
+  "courtyard": [
+   -1.68,
+   -0.95,
+   1.68,
+   0.95
+  ],
+  "attr": [
+   "smd"
+  ]
+ },
+ "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -2.475,
+    "y": -1.905,
+    "r": 0,
+    "w": 1.95,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "2",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -2.475,
+    "y": -0.635,
+    "r": 0,
+    "w": 1.95,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "3",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -2.475,
+    "y": 0.635,
+    "r": 0,
+    "w": 1.95,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "4",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -2.475,
+    "y": 1.905,
+    "r": 0,
+    "w": 1.95,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "5",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 2.475,
+    "y": 1.905,
+    "r": 0,
+    "w": 1.95,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "6",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 2.475,
+    "y": 0.635,
+    "r": 0,
+    "w": 1.95,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "7",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 2.475,
+    "y": -0.635,
+    "r": 0,
+    "w": 1.95,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "8",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 2.475,
+    "y": -1.905,
+    "r": 0,
+    "w": 1.95,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   }
+  ],
+  "courtyard": [
+   -3.7,
+   -2.7,
+   3.7,
+   2.7
+  ],
+  "attr": [
+   "smd"
+  ]
+ },
+ "Package_SO:SOIC-8_5.3x5.3mm_P1.27mm": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.5875,
+    "y": -1.905,
+    "r": 0,
+    "w": 1.625,
+    "h": 0.65,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "2",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.5875,
+    "y": -0.635,
+    "r": 0,
+    "w": 1.625,
+    "h": 0.65,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "3",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.5875,
+    "y": 0.635,
+    "r": 0,
+    "w": 1.625,
+    "h": 0.65,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "4",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.5875,
+    "y": 1.905,
+    "r": 0,
+    "w": 1.625,
+    "h": 0.65,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "5",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.5875,
+    "y": 1.905,
+    "r": 0,
+    "w": 1.625,
+    "h": 0.65,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "6",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.5875,
+    "y": 0.635,
+    "r": 0,
+    "w": 1.625,
+    "h": 0.65,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "7",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.5875,
+    "y": -0.635,
+    "r": 0,
+    "w": 1.625,
+    "h": 0.65,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "8",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.5875,
+    "y": -1.905,
+    "r": 0,
+    "w": 1.625,
+    "h": 0.65,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   }
+  ],
+  "courtyard": [
+   -4.65,
+   -2.9,
+   4.65,
+   2.9
+  ],
+  "attr": [
+   "smd"
+  ]
+ },
+ "Package_TO_SOT_SMD:SOT-23-5": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.1375,
+    "y": -0.95,
+    "r": 0,
+    "w": 1.325,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "2",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.1375,
+    "y": 0.0,
+    "r": 0,
+    "w": 1.325,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "3",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.1375,
+    "y": 0.95,
+    "r": 0,
+    "w": 1.325,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "4",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.1375,
+    "y": 0.95,
+    "r": 0,
+    "w": 1.325,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "5",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.1375,
+    "y": -0.95,
+    "r": 0,
+    "w": 1.325,
+    "h": 0.6,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   }
+  ],
+  "courtyard": [
+   -2.05,
+   -1.7,
+   2.05,
+   1.7
+  ],
+  "attr": [
+   "smd"
+  ]
+ },
+ "Package_DFN_QFN:QFN-56-1EP_7x7mm_P0.4mm_EP3.2x3.2mm": {
+  "pads": [
+   {
+    "n": "",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -0.8,
+    "y": -0.8,
+    "r": 0,
+    "w": 1.29,
+    "h": 1.29,
+    "layers": [
+     "F.Paste"
+    ],
+    "rr": 0.193798
+   },
+   {
+    "n": "",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -0.8,
+    "y": 0.8,
+    "r": 0,
+    "w": 1.29,
+    "h": 1.29,
+    "layers": [
+     "F.Paste"
+    ],
+    "rr": 0.193798
+   },
+   {
+    "n": "",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 0.8,
+    "y": -0.8,
+    "r": 0,
+    "w": 1.29,
+    "h": 1.29,
+    "layers": [
+     "F.Paste"
+    ],
+    "rr": 0.193798
+   },
+   {
+    "n": "",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 0.8,
+    "y": 0.8,
+    "r": 0,
+    "w": 1.29,
+    "h": 1.29,
+    "layers": [
+     "F.Paste"
+    ],
+    "rr": 0.193798
+   },
+   {
+    "n": "1",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": -2.6,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "2",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": -2.2,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "3",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": -1.8,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "4",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": -1.4,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "5",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": -1.0,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "6",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": -0.6,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "7",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": -0.2,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "8",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": 0.2,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "9",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": 0.6,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "10",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": 1.0,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "11",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": 1.4,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "12",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": 1.8,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "13",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": 2.2,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "14",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.4375,
+    "y": 2.6,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "15",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -2.6,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "16",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -2.2,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "17",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.8,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "18",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.4,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "19",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.0,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "20",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -0.6,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "21",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -0.2,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "22",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 0.2,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "23",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 0.6,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "24",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.0,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "25",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.4,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "26",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.8,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "27",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 2.2,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "28",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 2.6,
+    "y": 3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "29",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": 2.6,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "30",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": 2.2,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "31",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": 1.8,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "32",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": 1.4,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "33",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": 1.0,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "34",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": 0.6,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "35",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": 0.2,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "36",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": -0.2,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "37",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": -0.6,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "38",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": -1.0,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "39",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": -1.4,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "40",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": -1.8,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "41",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": -2.2,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "42",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.4375,
+    "y": -2.6,
+    "r": 0,
+    "w": 0.875,
+    "h": 0.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "43",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 2.6,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "44",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 2.2,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "45",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.8,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "46",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.4,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "47",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.0,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "48",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 0.6,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "49",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 0.2,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "50",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -0.2,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "51",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -0.6,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "52",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.0,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "53",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.4,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "54",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.8,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "55",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -2.2,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "56",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -2.6,
+    "y": -3.4375,
+    "r": 0,
+    "w": 0.2,
+    "h": 0.875,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "57",
+    "t": "smd",
+    "s": "rect",
+    "x": 0.0,
+    "y": 0.0,
+    "r": 0,
+    "w": 3.2,
+    "h": 3.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask"
+    ]
+   }
+  ],
+  "courtyard": [
+   -4.13,
+   -4.13,
+   4.13,
+   4.13
+  ],
+  "attr": [
+   "smd"
+  ]
+ },
+ "Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.1,
+    "y": 0.85,
+    "r": 0,
+    "w": 1.4,
+    "h": 1.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.208333
+   },
+   {
+    "n": "2",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.1,
+    "y": 0.85,
+    "r": 0,
+    "w": 1.4,
+    "h": 1.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.208333
+   },
+   {
+    "n": "3",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.1,
+    "y": -0.85,
+    "r": 0,
+    "w": 1.4,
+    "h": 1.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.208333
+   },
+   {
+    "n": "4",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.1,
+    "y": -0.85,
+    "r": 0,
+    "w": 1.4,
+    "h": 1.2,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.208333
+   }
+  ],
+  "courtyard": [
+   -2.1,
+   -1.75,
+   2.1,
+   1.75
+  ],
+  "attr": [
+   "smd"
+  ]
+ },
+ "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "thru_hole",
+    "s": "rect",
+    "x": 0.0,
+    "y": 0.0,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "2",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 2.54,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   }
+  ],
+  "courtyard": [
+   -1.77,
+   -1.77,
+   1.77,
+   4.32
+  ],
+  "attr": [
+   "through_hole"
+  ]
+ },
+ "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "thru_hole",
+    "s": "rect",
+    "x": 0.0,
+    "y": 0.0,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "2",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 2.54,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "3",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 5.08,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   }
+  ],
+  "courtyard": [
+   -1.77,
+   -1.77,
+   1.77,
+   6.85
+  ],
+  "attr": [
+   "through_hole"
+  ]
+ },
+ "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "thru_hole",
+    "s": "rect",
+    "x": 0.0,
+    "y": 0.0,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "2",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 2.54,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "3",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 5.08,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "4",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 7.62,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "5",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 10.16,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   }
+  ],
+  "courtyard": [
+   -1.77,
+   -1.77,
+   1.77,
+   11.93
+  ],
+  "attr": [
+   "through_hole"
+  ]
+ },
+ "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "thru_hole",
+    "s": "rect",
+    "x": 0.0,
+    "y": 0.0,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "2",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 2.54,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "3",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 5.08,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "4",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 7.62,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "5",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 10.16,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   },
+   {
+    "n": "6",
+    "t": "thru_hole",
+    "s": "circle",
+    "x": 0.0,
+    "y": 12.7,
+    "r": 0,
+    "w": 1.7,
+    "h": 1.7,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     1.0
+    ]
+   }
+  ],
+  "courtyard": [
+   -1.77,
+   -1.77,
+   1.77,
+   14.47
+  ],
+  "attr": [
+   "through_hole"
+  ]
+ },
+ "Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12": {
+  "pads": [
+   {
+    "n": "",
+    "t": "np_thru_hole",
+    "s": "circle",
+    "x": -2.89,
+    "y": -2.6,
+    "r": 0,
+    "w": 0.65,
+    "h": 0.65,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     0.65
+    ]
+   },
+   {
+    "n": "",
+    "t": "np_thru_hole",
+    "s": "circle",
+    "x": 2.89,
+    "y": -2.6,
+    "r": 0,
+    "w": 0.65,
+    "h": 0.65,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     0.65
+    ]
+   },
+   {
+    "n": "A1",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.25,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.6,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "A4",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -2.45,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.6,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "A5",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.25,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.3,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "A6",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -0.25,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.3,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "A7",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 0.25,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.3,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "A8",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.25,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.3,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "A9",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 2.45,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.6,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "A12",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.25,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.6,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "B1",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 3.25,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.6,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "B4",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 2.45,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.6,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "B5",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 1.75,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.3,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "B6",
+    "t": "smd",
+    "s": "roundrect",
+    "x": 0.75,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.3,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "B7",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -0.75,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.3,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "B8",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -1.75,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.3,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "B9",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -2.45,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.6,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "B12",
+    "t": "smd",
+    "s": "roundrect",
+    "x": -3.25,
+    "y": -4.045,
+    "r": 0,
+    "w": 0.6,
+    "h": 1.45,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ],
+    "rr": 0.25
+   },
+   {
+    "n": "SH",
+    "t": "thru_hole",
+    "s": "oval",
+    "x": -4.32,
+    "y": -3.13,
+    "r": 0,
+    "w": 1.0,
+    "h": 2.1,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     0.6,
+     1.7
+    ]
+   },
+   {
+    "n": "SH",
+    "t": "thru_hole",
+    "s": "oval",
+    "x": -4.32,
+    "y": 1.05,
+    "r": 0,
+    "w": 1.0,
+    "h": 1.6,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     0.6,
+     1.2
+    ]
+   },
+   {
+    "n": "SH",
+    "t": "thru_hole",
+    "s": "oval",
+    "x": 4.32,
+    "y": -3.13,
+    "r": 0,
+    "w": 1.0,
+    "h": 2.1,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     0.6,
+     1.7
+    ]
+   },
+   {
+    "n": "SH",
+    "t": "thru_hole",
+    "s": "oval",
+    "x": 4.32,
+    "y": 1.05,
+    "r": 0,
+    "w": 1.0,
+    "h": 1.6,
+    "layers": [
+     "*.Cu",
+     "*.Mask"
+    ],
+    "drill": [
+     0.6,
+     1.2
+    ]
+   }
+  ],
+  "courtyard": [
+   -5.32,
+   -5.27,
+   5.32,
+   4.15
+  ],
+  "attr": [
+   "smd"
+  ]
+ },
+ "Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A": {
+  "pads": [
+   {
+    "n": "1",
+    "t": "smd",
+    "s": "rect",
+    "x": -3.0,
+    "y": -1.875,
+    "r": 0,
+    "w": 1.0,
+    "h": 0.75,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ]
+   },
+   {
+    "n": "1",
+    "t": "smd",
+    "s": "rect",
+    "x": 3.0,
+    "y": -1.875,
+    "r": 0,
+    "w": 1.0,
+    "h": 0.75,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ]
+   },
+   {
+    "n": "2",
+    "t": "smd",
+    "s": "rect",
+    "x": -3.0,
+    "y": 1.875,
+    "r": 0,
+    "w": 1.0,
+    "h": 0.75,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ]
+   },
+   {
+    "n": "2",
+    "t": "smd",
+    "s": "rect",
+    "x": 3.0,
+    "y": 1.875,
+    "r": 0,
+    "w": 1.0,
+    "h": 0.75,
+    "layers": [
+     "F.Cu",
+     "F.Mask",
+     "F.Paste"
+    ]
+   }
+  ],
+  "courtyard": [
+   -3.75,
+   -2.8,
+   3.75,
+   2.8
+  ],
+  "attr": [
+   "smd"
+  ]
+ }
+}

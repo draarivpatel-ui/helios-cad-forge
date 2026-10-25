@@ -1,0 +1,78 @@
+# Helios-6 Parametric Solar Tracker & KiCad Telemetry Node
+
+**Live CAD & EDA Workbench:** [https://aariv.me/helios-cad-forge/](https://aariv.me/helios-cad-forge/)
+
+Helios-6 is a parametric dual-axis solar tracker gimbal, OpenSCAD + watertight STL mesh generator, Spencer (1971) solar ephemeris calculator, and KiCad 8 RP2040 + INA219 telemetry node. The project pairs committed mechanical and electrical hardware artifacts (`cad/`, `pcb/`, `bom/`) with a zero-dependency in-browser CAD and EDA studio (`index.html`, `styles.css`, `engine.js`, `hardware.js`, `app.js`).
+
+## Repository Architecture
+
+```text
+helios-cad-forge/
+├── index.html                    # Dieter Rams / Mitutoyo blueprint light-mode CAD & EDA studio
+├── styles.css                    # Drafting vellum (#F5F3EC) and anodized panel (#EAE6DA) stylesheet
+├── engine.js                     # UMD solar position, worm-gear kinematics, watertight STL & OpenSCAD engine
+├── hardware.js                   # UMD LCSC bill of materials, RP2040 + INA219 netlist & 80x56 mm PCB placement
+├── app.js                        # Interactive 3D canvas viewport, stereographic sun-path & PCB inspector
+├── cad/
+│   ├── helios_gimbal.scad        # Parametric OpenSCAD source for the 6-body gimbal assembly
+│   ├── helios_base.stl           # Watertight ASCII STL for the cylindrical stator base (genus 1)
+│   ├── helios_worm_gear.stl      # Watertight ASCII STL for the 24-tooth involute worm wheel (genus 1)
+│   └── helios_yoke.stl           # Watertight ASCII STL for the elevation U-yoke (genus 0)
+├── pcb/
+│   ├── helios_mppt_node.kicad_pro # KiCad 8 project configuration
+│   ├── helios_mppt_node.kicad_sch # KiCad 8 schematic (48 placed symbols, full net labels & no-connects)
+│   └── helios_mppt_node.kicad_pcb # KiCad 8 2-layer 80x56 mm PCB (48 non-overlapping footprints + GND zone)
+├── bom/
+│   └── bom.csv                   # 26-line grouped BOM (48 on-board parts + off-board steppers/LDRs/panel)
+├── tools/
+│   ├── build-artifacts.js        # Deterministic generator for cad/, pcb/, and bom/
+│   ├── kicad.js                  # KiCad 8 S-expression schematic and PCB builder
+│   ├── footprints.json           # Pad and courtyard geometry extracted from official KiCad 8 footprints
+│   ├── sexpr.js                  # S-expression tokenizer and tree parser for test verification
+│   └── verify-scad.mjs           # OpenSCAD WebAssembly volume and bounding-box parity verifier
+└── tests/
+    ├── engine.test.js            # Unit tests for solar math, gear kinematics, manifold topology & KiCad files
+    └── dom-smoke.test.js         # DOM smoke tests for the interactive 3D workbench & anti-slop hygiene
+```
+
+## Core Engineering Capabilities
+
+### 1. Spencer (1971) Solar Ephemeris & Meinel Clear-Sky Yield
+* Computes fractional year, solar declination ($\delta$), equation of time (EoT), solar hour angle ($\omega$), solar zenith/elevation, and clockwise azimuth from true north.
+* Integrates daily clear-sky beam irradiance using the Meinel air-mass attenuation model ($I_b = I_0 \cdot 0.7^{AM^{0.678}}$) to compare dual-axis tracking against fixed latitude tilt and horizontal surfaces.
+* Renders an interactive polar stereographic sky dome with summer solstice (Day 172), equinox (Day 80), winter solstice (Day 355), and active day trajectories.
+
+### 2. Self-Locking Worm-Gear Kinematics & Watertight Mesh Synthesis
+* Synthesizes true involute tooth flanks ($\alpha = 20^\circ$ pressure angle, configurable module $m$ and tooth count $z$) with print-tolerance backlash compensation.
+* Evaluates worm lead angle ($\lambda = \arctan(z_1 m / d_1)$) against static friction angle ($\phi_s = \arctan(\mu / \cos\alpha)$) to verify static self-locking under wind load without holding current.
+* Builds 6 closed triangle meshes (`base`, `wheel`, `yoke`, `panel`, `pcb`, `sensors`) and validates every body with an Euler-Poincare manifold checker ($V - E + F = 2S - 2g$, zero boundary edges, zero non-manifold edges, consistent outward triangle winding).
+
+### 3. RP2040 + INA219 Telemetry Node & Verified LCSC BOM
+* Captures a 48-component on-board circuit (`U1` RP2040 QFN-56, `U2` W25Q16JVSSIQ QSPI flash, `U3` INA219AIDR high-side I2C current/voltage monitor, `U4` AP2112K-3.3 LDO, `Y1` 12 MHz crystal, `J1` USB-C, `R14` 0.1 ohm 1206 current shunt, quadrant LDR dividers `R9..R12`, and headers `J2..J8`).
+* Every pin of all 48 placed components is verified against official KiCad 8 symbol definitions and either assigned to one of 40 named nets or explicitly documented in `NO_CONNECT`.
+* All 48 footprint courtyards are placed on an 80 x 56 mm 2-layer board and verified by automated tests to lie strictly inside `Edge.Cuts` with zero courtyard overlaps.
+
+## Verification & Local Commands
+
+Requires Node.js 18+ (zero `npm` runtime dependencies):
+
+```bash
+# Run the 68-test unit and DOM smoke suite
+npm test
+
+# Deterministically regenerate all STL, OpenSCAD, KiCad 8, and BOM artifacts
+npm run build
+```
+
+To run the optional OpenSCAD WebAssembly geometry parity check (`tools/verify-scad.mjs`):
+
+```bash
+npm install --no-save openscad-wasm-prebuilt
+node tools/verify-scad.mjs
+```
+
+See [NOTES.md](NOTES.md) for full engineering notes and verification disclosures.
+
+## License
+
+Released under the [MIT License](LICENSE).

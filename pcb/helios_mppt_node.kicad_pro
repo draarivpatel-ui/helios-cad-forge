@@ -1,0 +1,19 @@
+{
+  "board": {
+    "design_settings": {
+      "defaults": {
+        "board_outline_line_width": 0.1,
+        "copper_line_width": 0.2
+      }
+    }
+  },
+  "meta": {
+    "filename": "helios_mppt_node.kicad_pro",
+    "version": 1
+  },
+  "schematic": {
+    "drawing": {
+      "default_line_thickness": 6
+    }
+  }
+}

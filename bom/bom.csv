@@ -1,0 +1,27 @@
+Reference,Qty,Value,Footprint,Manufacturer,MPN,LCSC,Mouser search,Description,Placement
+C1 C2,2,10uF,Capacitor_SMD:C_0603_1608Metric,Samsung Electro-Mechanics,CL10A106KP8NNNC,C19702,https://www.mouser.com/c/?q=CL10A106KP8NNNC,10uF 10V X5R 0603,on board
+C3 C4 C5 C6 C7 C8 C9 C10 C11 C12 C17 C18,12,100nF,Capacitor_SMD:C_0603_1608Metric,Samsung Electro-Mechanics,CL10B104KB8NNNC,C1591,https://www.mouser.com/c/?q=CL10B104KB8NNNC,100nF 50V X7R 0603,on board
+C13 C14,2,1uF,Capacitor_SMD:C_0603_1608Metric,Samsung Electro-Mechanics,CL10A105KB8NNNC,C15849,https://www.mouser.com/c/?q=CL10A105KB8NNNC,1uF 50V X5R 0603,on board
+C15 C16,2,22pF,Capacitor_SMD:C_0603_1608Metric,Samsung Electro-Mechanics,CL10C220JB8NNNC,C1653,https://www.mouser.com/c/?q=CL10C220JB8NNNC,22pF 50V C0G 0603,on board
+D1,1,RED,LED_SMD:LED_0805_2012Metric,Nationstar,NCD0805R1,C84256,https://www.mouser.com/c/?q=NCD0805R1,"Red LED, 0805",on board
+J1,1,USB-C,Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12,Korean Hroparts Elec,TYPE-C-31-M-12,C165948,https://www.mouser.com/c/?q=TYPE-C-31-M-12,"USB Type-C receptacle, 16 position SMD",on board
+J2 J3,2,1x05 header,Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical,Ckmtw,B-2100S05P-A110,C124379,https://www.mouser.com/c/?q=B-2100S05P-A110,"2.54 mm single-row pin header, 5 position",on board
+J4,1,1x06 header,Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical,Ckmtw,B-2100S06P-A110,C124380,https://www.mouser.com/c/?q=B-2100S06P-A110,"2.54 mm single-row pin header, 6 position",on board
+J5 J6,2,1x02 header,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,Ckmtw,B-2100S02P-A110,C124375,https://www.mouser.com/c/?q=B-2100S02P-A110,"2.54 mm single-row pin header, 2 position",on board
+J7 J8,2,1x03 header,Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical,Ckmtw,B-2100S03P-A110,C124376,https://www.mouser.com/c/?q=B-2100S03P-A110,"2.54 mm single-row pin header, 3 position",on board
+R1 R2,2,27R,Resistor_SMD:R_0603_1608Metric,UNI-ROYAL,0603WAF270JT5E,C25190,https://www.mouser.com/c/?q=0603WAF270JT5E,27 ohm 0603,on board
+R3 R6 R13,3,1k,Resistor_SMD:R_0603_1608Metric,UNI-ROYAL,0603WAF1001T5E,C21190,https://www.mouser.com/c/?q=0603WAF1001T5E,1k 1% 0603,on board
+R4 R5 R9 R10 R11 R12,6,10k,Resistor_SMD:R_0603_1608Metric,UNI-ROYAL,0603WAF1002T5E,C25804,https://www.mouser.com/c/?q=0603WAF1002T5E,10k 1% 0603,on board
+R7 R8,2,5.1k,Resistor_SMD:R_0603_1608Metric,UNI-ROYAL,0603WAF5101T5E,C23186,https://www.mouser.com/c/?q=0603WAF5101T5E,5.1k 1% 0603,on board
+R14,1,0R1,Resistor_SMD:R_1206_3216Metric,UNI-ROYAL,1206W4F100LT5E,C25334,https://www.mouser.com/c/?q=1206W4F100LT5E,0.1 ohm 1% 1206 shunt,on board
+SW1,1,BOOTSEL,Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A,XKB Connection,TS-1187A-B-A-B,C318884,https://www.mouser.com/c/?q=TS-1187A-B-A-B,"SMD tactile switch, 5.1 x 5.1 mm",on board
+SW2,1,RESET,Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A,XKB Connection,TS-1187A-B-A-B,C318884,https://www.mouser.com/c/?q=TS-1187A-B-A-B,"SMD tactile switch, 5.1 x 5.1 mm",on board
+U1,1,RP2040,Package_DFN_QFN:QFN-56-1EP_7x7mm_P0.4mm_EP3.2x3.2mm,Raspberry Pi,RP2040,C2040,https://www.mouser.com/c/?q=RP2040,"Dual-core Cortex-M0+ microcontroller, QFN-56",on board
+U2,1,W25Q16JVSSIQ,Package_SO:SOIC-8_5.3x5.3mm_P1.27mm,Winbond,W25Q16JVSSIQ,C82317,https://www.mouser.com/c/?q=W25Q16JVSSIQ,"16 Mbit QSPI flash, SOIC-8 208 mil",on board
+U3,1,INA219AIDR,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,Texas Instruments,INA219AIDR,C138706,https://www.mouser.com/c/?q=INA219AIDR,"I2C current and bus voltage monitor, SOIC-8",on board
+U4,1,AP2112K-3.3,Package_TO_SOT_SMD:SOT-23-5,Diodes Incorporated,AP2112K-3.3TRG1,C51118,https://www.mouser.com/c/?q=AP2112K-3.3TRG1,"3.3 V 600 mA LDO regulator, SOT-23-5",on board
+Y1,1,12MHz,Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm,YXC,X322512MSB4SI,C9002,https://www.mouser.com/c/?q=X322512MSB4SI,"12 MHz 20 pF crystal, 3225 4-pad",on board
+LDR1-LDR4,4,GL5528,off board,Senba Sensing,GL5528,,https://www.mouser.com/c/?q=GL5528,"CdS photoresistor, 5 mm, four on the sensor head via J4",off board
+M1-M2,2,stepper,off board,,,,,"Two 200 step per revolution stepper motors, azimuth and elevation",off board
+DRV1-DRV2,2,driver,off board,,,,,Two STEP/DIR/EN stepper driver modules wired to J2 and J3,off board
+PV1,1,solar panel,off board,,,,,"Small solar panel on the elevation axis, wired to J5",off board
