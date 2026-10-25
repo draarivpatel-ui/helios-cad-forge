@@ -439,7 +439,10 @@ test('computeOptimalTiltGain and computeSpurMetrics respect both default and exp
   const gDefault = E.computeOptimalTiltGain({ latitude: 38.9, dayOfYear: 172 });
   const gCoarse = E.computeOptimalTiltGain({ latitude: 38.9, dayOfYear: 172, stepMinutes: 60 });
   assert.notEqual(gDefault.daylightHours, gCoarse.daylightHours);
-  assert.equal(Math.round(gDefault.daylightHours * 10), 149);
+  // Closed form for 38.9 N on day 172 with no refraction is 2*acos(-tan(lat)*tan(decl))/15 = 14.73 h.
+  // The default 6 minute grid lands on 14.8 h, within one grid step of that.
+  assert.equal(Math.round(gDefault.daylightHours * 10), 148);
+  assert.ok(Math.abs(gDefault.daylightHours - 14.73) < 0.1);
 
   const spurDefault = E.computeSpurMetrics({ module: 1.5, teeth: 24 });
   const spur145 = E.computeSpurMetrics({ module: 1.5, teeth: 24, pressureAngle: 14.5 });

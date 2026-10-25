@@ -256,7 +256,7 @@
         </div>
 
         <div class="canvas-stage">
-          <canvas id="cad-viewport" width="760" height="490" aria-label="Interactive 3D CAD viewport of the Helios-6 solar tracker gimbal"></canvas>
+          <canvas id="cad-viewport" width="760" height="490" tabindex="0" aria-label="Interactive 3D CAD viewport of the Helios-6 solar tracker gimbal. Arrow keys orbit, plus and minus zoom."></canvas>
           <div class="viewport-hud-top">
             <div class="hud-card" id="hud-dimensions">
               Pitch Dia: 36.00 mm | OD: 39.00 mm | Bore: 8.00 mm
@@ -266,7 +266,7 @@
             </div>
           </div>
           <div class="viewport-hud-bottom">
-            <span>Drag canvas to orbit camera; scroll wheel or +/- to zoom</span>
+            <span><span class="hint-pointer">Drag to orbit, scroll or +/- to zoom</span><span class="hint-touch">Swipe sideways to orbit, use + / - to zoom</span></span>
             <span id="hud-manifold-detail">V=1698 E=5100 F=3400 (Euler χ=0, Watertight)</span>
           </div>
         </div>
@@ -317,7 +317,7 @@
         </div>
         <div class="panel-body">
           <div class="sunpath-wrap">
-            <svg id="sunpath-svg" viewBox="-165 -165 330 330" role="img" aria-label="Polar stereographic sun-path chart showing summer solstice, equinox, winter solstice, and active day trajectories">
+            <svg id="sunpath-svg" viewBox="-182 -165 364 330" role="img" aria-label="Polar stereographic sun-path chart showing summer solstice, equinox, winter solstice, and active day trajectories">
               <!-- Populated and updated dynamically by app.js -->
             </svg>
             <div class="sunpath-legend">
@@ -436,7 +436,7 @@
 
         <div class="panel-body">
           <div class="inspector-toolbar">
-            <input type="search" id="inspector-search" class="search-input" placeholder="Filter by ref (U1, INA219, C2040, STEP_AZ, GPIO)..." aria-label="Filter BOM or pinout rows">
+            <input type="search" id="inspector-search" class="search-input" placeholder="Filter by ref, part or net (U1, C2040, STEP_AZ)" aria-label="Filter BOM or pinout rows">
             <div class="toolbar-group">
               <button type="button" id="btn-copy-scad" class="btn preset-btn">Copy .SCAD to Clipboard</button>
               <a href="cad/helios_gimbal.scad" download="helios_gimbal.scad" class="btn preset-btn">Static cad/helios_gimbal.scad</a>

@@ -260,7 +260,13 @@
             ctx.lineTo(pe.x, pe.y);
             ctx.stroke();
             ctx.fillStyle = ax.color;
-            ctx.fillText(ax.label, pe.x + 4, pe.y + 3);
+            var labelW = ctx.measureText ? ctx.measureText(ax.label).width : 36;
+            var lx = pe.x + 4;
+            if (lx + labelW > cssW - 6) {
+              lx = pe.x - labelW - 4;
+            }
+            lx = Math.max(6, lx);
+            ctx.fillText(ax.label, lx, Math.max(12, Math.min(cssH - 6, pe.y + 3)));
           }
         });
       }
@@ -355,9 +361,16 @@
       // Draw incident sun vector ray into the solar array pivot
       var arrayPivotZ = layout.pivotWorldZ + 3 * state.explode * E.EXPLODE_SPACING_MM;
       var sv = sun.sunVector;
-      var rayStart = [sv[0] * 62, sv[1] * 62, arrayPivotZ + sv[2] * 62];
+      // Pull the sun marker in until it clears the readout cards along the top edge.
+      var rayLen = 62;
+      var rayStart = [sv[0] * rayLen, sv[1] * rayLen, arrayPivotZ + sv[2] * rayLen];
       var rayEnd = [sv[0] * 14, sv[1] * 14, arrayPivotZ + sv[2] * 14];
       var pSun0 = E.projectPoint(rayStart, state.camera, viewport, basis);
+      while (pSun0 && rayLen > 30 && (pSun0.y < (cssW < 500 ? 104 : 64) || pSun0.x < 60 || pSun0.x > cssW - 70)) {
+        rayLen -= 4;
+        rayStart = [sv[0] * rayLen, sv[1] * rayLen, arrayPivotZ + sv[2] * rayLen];
+        pSun0 = E.projectPoint(rayStart, state.camera, viewport, basis);
+      }
       var pSun1 = E.projectPoint(rayEnd, state.camera, viewport, basis);
       if (pSun0 && pSun1) {
         ctx.strokeStyle = sun.isDaylight ? '#D95326' : '#656B70';
@@ -409,10 +422,10 @@
 
       // Cardinal labels
       var cardinals = [
-        { label: 'N (0°)', x: 0, y: -R - 8, anchor: 'middle' },
-        { label: 'E (90°)', x: R + 6, y: 3, anchor: 'start' },
-        { label: 'S (180°)', x: 0, y: R + 13, anchor: 'middle' },
-        { label: 'W (270°)', x: -R - 6, y: 3, anchor: 'end' }
+        { label: 'N 0°', x: 0, y: -R - 8, anchor: 'middle' },
+        { label: 'E 90°', x: R + 6, y: 3, anchor: 'start' },
+        { label: 'S 180°', x: 0, y: R + 13, anchor: 'middle' },
+        { label: 'W 270°', x: -R - 6, y: 3, anchor: 'end' }
       ];
       cardinals.forEach(function (c) {
         parts.push('<text x="' + c.x + '" y="' + c.y + '" text-anchor="' + c.anchor + '" fill="#141618" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="9">' + c.label + '</text>');
@@ -454,9 +467,15 @@
         if (hPos.elevationDeg > 0) {
           var hp = E.stereographicProject(hPos.azimuthDeg, hPos.elevationDeg, R);
           parts.push('<g class="sun-hour-tick" data-hour="' + h + '" style="cursor:pointer;">');
+          parts.push('<title>' + h + ':00 solar time, azimuth ' + hPos.azimuthDeg.toFixed(0) + '°, elevation ' + hPos.elevationDeg.toFixed(0) + '°</title>');
           parts.push('<circle cx="' + hp.x.toFixed(2) + '" cy="' + hp.y.toFixed(2) + '" r="3.4" fill="#F5F3EC" stroke="#D95326" stroke-width="1.3"/>');
           if (h % 2 === 0) {
-            parts.push('<text x="' + (hp.x + 5).toFixed(1) + '" y="' + (hp.y - 4).toFixed(1) + '" fill="#141618" font-family="IBM Plex Mono, monospace" font-size="7.5">' + h + 'h</text>');
+            // Push the label away from the dome centre, or toward it when the tick sits on the rim.
+            var hr = Math.sqrt(hp.x * hp.x + hp.y * hp.y) || 1;
+            var push = hr < R * 0.8 ? 12 : -12;
+            var lx = hp.x + (hp.x / hr) * push;
+            var ly = hp.y + (hp.y / hr) * push + 2.5;
+            parts.push('<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="middle" fill="#141618" stroke="#F5F3EC" stroke-width="2.6" paint-order="stroke" font-family="IBM Plex Mono, monospace" font-size="8">' + h + 'h</text>');
           }
           parts.push('</g>');
         }
@@ -555,6 +574,10 @@
 
     /* ------------------------------------------- BOM & Pinout Tables */
 
+    function escapeHtml(text) {
+      return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     function renderBomAndPinoutTables() {
       var q = state.searchQuery.trim().toLowerCase();
       var bomTbody = doc.getElementById('bom-tbody');
@@ -586,6 +609,9 @@
             '</tr>'
           );
         });
+        if (!rowsHtml.length) {
+          rowsHtml.push('<tr class="empty-row"><td colspan="7">No BOM line matches &ldquo;' + escapeHtml(q) + '&rdquo;. Try a reference like U1 or C2, a value like 100nF, or an LCSC number.</td></tr>');
+        }
         bomTbody.innerHTML = rowsHtml.join('');
       }
 
@@ -618,6 +644,9 @@
             '</tr>'
           );
         });
+        if (!pinHtml.length) {
+          pinHtml.push('<tr class="empty-row"><td colspan="4">No pin matches &ldquo;' + escapeHtml(q) + '&rdquo;. Try a pin like U1.GPIO4 or a net like STEP_AZ.</td></tr>');
+        }
         pinTbody.innerHTML = pinHtml.join('');
       }
     }
@@ -667,7 +696,7 @@
       setText('banner-ratio', train.ratio + ':1 (' + (train.selfLocking ? '+' : '') + train.lockMarginDeg.toFixed(2) + ' deg lock)');
       var pctGain = gain.fixedTiltEnergy > 0 ? ((gain.gainVsFixedTilt - 1) * 100) : 0;
       setText('banner-gain', '+' + pctGain.toFixed(1) + '% vs fixed tilt');
-      setText('banner-bom-count', HW.totalPartsOnBoard() + ' SMD/THT parts (80x56 mm)');
+      setText('banner-bom-count', HW.totalPartsOnBoard() + ' SMD/THT parts (80x56\u00a0mm)');
 
       // Update viewport HUD & metrology cells
       setText('viewport-pose-readout', 'Az ' + pose.azimuthDeg.toFixed(1) + ' deg / El ' + pose.elevationDeg.toFixed(1) + ' deg');
@@ -906,6 +935,28 @@
         var stopDrag = function () { dragging = false; };
         canvas.addEventListener('pointerup', stopDrag);
         canvas.addEventListener('pointercancel', stopDrag);
+        canvas.addEventListener('keydown', function (ev) {
+          var handled = true;
+          if (ev.key === 'ArrowLeft') {
+            state.camera.yaw = (state.camera.yaw + 6) % 360;
+          } else if (ev.key === 'ArrowRight') {
+            state.camera.yaw = (state.camera.yaw - 6) % 360;
+          } else if (ev.key === 'ArrowUp') {
+            state.camera.pitch = Math.max(-85, Math.min(85, state.camera.pitch - 4));
+          } else if (ev.key === 'ArrowDown') {
+            state.camera.pitch = Math.max(-85, Math.min(85, state.camera.pitch + 4));
+          } else if (ev.key === '+' || ev.key === '=') {
+            state.camera.zoom = Math.max(0.4, Math.min(4.0, state.camera.zoom * 1.08));
+          } else if (ev.key === '-' || ev.key === '_') {
+            state.camera.zoom = Math.max(0.4, Math.min(4.0, state.camera.zoom * 0.92));
+          } else {
+            handled = false;
+          }
+          if (handled) {
+            ev.preventDefault();
+            updateAll();
+          }
+        });
         canvas.addEventListener('wheel', function (ev) {
           ev.preventDefault();
           var factor = ev.deltaY < 0 ? 1.08 : 0.92;
