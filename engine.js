@@ -93,6 +93,7 @@
 
   /** Equation of time in minutes (Spencer 1971). */
   function computeEquationOfTime(dayOfYear, solarHour) {
+    requireRange('dayOfYear', dayOfYear, 1, 366);
     var g = fractionalYear(dayOfYear, solarHour === undefined ? 12 : solarHour);
     return 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g) -
       0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
@@ -100,6 +101,7 @@
 
   /** Solar declination in degrees (Spencer 1971). */
   function computeDeclination(dayOfYear, solarHour) {
+    requireRange('dayOfYear', dayOfYear, 1, 366);
     var g = fractionalYear(dayOfYear, solarHour === undefined ? 12 : solarHour);
     var rad = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) -
       0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g) -
@@ -114,6 +116,8 @@
   }
 
   function sunVectorFromAngles(azimuthDeg, elevationDeg) {
+    requireFinite('azimuthDeg', azimuthDeg);
+    requireFinite('elevationDeg', elevationDeg);
     var az = azimuthDeg * DEG;
     var el = elevationDeg * DEG;
     return [Math.cos(el) * Math.sin(az), Math.cos(el) * Math.cos(az), Math.sin(el)];
@@ -194,6 +198,7 @@
 
   /** Meinel clear-sky beam factor, 0.7^(AM^0.678), AM capped at 38. */
   function beamAttenuation(elevationDeg) {
+    requireFinite('elevationDeg', elevationDeg);
     if (elevationDeg <= 0) {
       return 0;
     }
@@ -277,6 +282,10 @@
   }
 
   function angularSeparationDeg(azA, elA, azB, elB) {
+    requireFinite('azA', azA);
+    requireFinite('elA', elA);
+    requireFinite('azB', azB);
+    requireFinite('elB', elB);
     var d = vecDot(sunVectorFromAngles(azA, elA), sunVectorFromAngles(azB, elB));
     return Math.acos(clamp(d, -1, 1)) / DEG;
   }
@@ -435,6 +444,8 @@
    */
   function computeGimbalPose(sun, input, limits) {
     var lim = limits || DEFAULT_LIMITS;
+    requireFinite('sun.azimuthDeg', sun.azimuthDeg);
+    requireFinite('sun.elevationDeg', sun.elevationDeg);
     var train = computeGearTrainMetrics(input);
     var azimuthDeg = clamp(sun.azimuthDeg, lim.azMin, lim.azMax);
     var elevationDeg = clamp(sun.elevationDeg, lim.elMin, lim.elMax);
@@ -793,9 +804,15 @@
   ]);
 
   function mergeMeshes(meshes) {
+    if (!Array.isArray(meshes)) {
+      fail('meshes must be an array');
+    }
     var vertices = [];
     var faces = [];
     meshes.forEach(function (mesh) {
+      if (!mesh || !Array.isArray(mesh.vertices) || !Array.isArray(mesh.faces)) {
+        fail('mergeMeshes expects {vertices, faces} meshes');
+      }
       var offset = vertices.length;
       mesh.vertices.forEach(function (v) { vertices.push(v); });
       mesh.faces.forEach(function (f) { faces.push([f[0] + offset, f[1] + offset, f[2] + offset]); });
@@ -1022,6 +1039,11 @@
       var a = mesh.vertices[f[0]];
       var b = mesh.vertices[f[1]];
       var c = mesh.vertices[f[2]];
+      [a, b, c].forEach(function (v) {
+        if (!v || !isFinite(v[0]) || !isFinite(v[1]) || !isFinite(v[2])) {
+          fail('cannot export STL: mesh contains a non-finite vertex');
+        }
+      });
       var n = vecNormalize(vecCross(vecSub(b, a), vecSub(c, a)));
       lines.push('  facet normal ' + n.map(formatStlNumber).join(' '));
       lines.push('    outer loop');
@@ -1041,10 +1063,39 @@
     var faces = [];
     var weld = {};
     var current = [];
+    var inLoop = false;
+    var sawStlToken = false;
+    var sawLoopMarker = false;
     var lines = text.split(/\r?\n/);
     for (var i = 0; i < lines.length; i++) {
       var t = lines[i].trim();
-      if (t.indexOf('vertex ') === 0) {
+      if (/^(solid|facet|outer|endloop|endfacet|endsolid)\b/.test(t)) {
+        sawStlToken = true;
+      }
+      if (t.indexOf('outer loop') === 0) {
+        if (inLoop) {
+          fail('nested loop on line ' + (i + 1));
+        }
+        if (current.length !== 0) {
+          fail('vertex outside facet loop on line ' + (i + 1));
+        }
+        inLoop = true;
+        sawLoopMarker = true;
+        current = [];
+      } else if (t.indexOf('endloop') === 0) {
+        if (!inLoop) {
+          fail('endloop without outer loop on line ' + (i + 1));
+        }
+        if (current.length !== 3) {
+          fail('facet must have exactly 3 vertices (line ' + (i + 1) + ')');
+        }
+        faces.push(current);
+        current = [];
+        inLoop = false;
+      } else if (t.indexOf('vertex ') === 0) {
+        if (sawLoopMarker && !inLoop) {
+          fail('vertex outside facet loop on line ' + (i + 1));
+        }
         var parts = t.split(/\s+/).slice(1);
         if (parts.length !== 3) {
           fail('bad vertex line ' + (i + 1));
@@ -1061,14 +1112,17 @@
           vertices.push(coords);
         }
         current.push(weld[key]);
-        if (current.length === 3) {
+        if (!sawLoopMarker && current.length === 3) {
           faces.push(current);
           current = [];
         }
       }
     }
-    if (current.length !== 0) {
+    if (inLoop || current.length !== 0) {
       fail('STL ended inside a facet');
+    }
+    if (faces.length === 0 && !sawStlToken) {
+      fail('not an ASCII STL file');
     }
     return makeMesh(vertices, faces);
   }
@@ -1224,6 +1278,8 @@
   }
 
   function cameraBasis(cam) {
+    requireFinite('cam.yaw', cam && cam.yaw);
+    requireFinite('cam.pitch', cam && cam.pitch);
     var yaw = cam.yaw * DEG;
     var pitch = cam.pitch * DEG;
     var toCamera = [Math.sin(yaw) * Math.cos(pitch), -Math.cos(yaw) * Math.cos(pitch), Math.sin(pitch)];
@@ -1307,6 +1363,9 @@
 
   /** Stereographic projection of the sky dome, horizon at radius R, north up. */
   function stereographicProject(azimuthDeg, elevationDeg, radius) {
+    requireFinite('azimuthDeg', azimuthDeg);
+    requireFinite('elevationDeg', elevationDeg);
+    requireFinite('radius', radius);
     var r = radius * Math.tan(((90 - elevationDeg) * DEG) / 2);
     return { x: r * Math.sin(azimuthDeg * DEG), y: -r * Math.cos(azimuthDeg * DEG) };
   }

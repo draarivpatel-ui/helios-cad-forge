@@ -1103,3 +1103,79 @@ test('EXPLODE_SPACING_MM and ISO_CAMERA expose sane defaults', () => {
   assert.ok(Number.isFinite(E.ISO_CAMERA.yaw) && Number.isFinite(E.ISO_CAMERA.pitch));
   assert.ok(E.ISO_CAMERA.zoom > 0);
 });
+
+/* ----------------- adversarial pass regression tests ---------------------- */
+
+test('parseAsciiStl rejects a facet whose loop holds more than 3 vertices', function () {
+  var stl = 'solid s\n' +
+    'facet normal 0 0 1\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nvertex 1 1 0\nvertex 0 1 0\nendloop\nendfacet\n' +
+    'endsolid\n';
+  assert.throws(function () { E.parseAsciiStl(stl); }, /exactly 3 vertices/);
+});
+
+test('parseAsciiStl cannot splice vertices across facet boundaries', function () {
+  // A 4-vertex loop followed by a 2-vertex loop used to yield a "valid"
+  // 2-face mesh whose second face spliced vertices from both facets.
+  var stl = 'solid s\n' +
+    'facet normal 0 0 1\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nvertex 1 1 0\nvertex 0 1 0\nendloop\nendfacet\n' +
+    'facet normal 0 0 1\nouter loop\nvertex 5 5 5\nvertex 6 5 5\nendloop\nendfacet\n' +
+    'endsolid\n';
+  assert.throws(function () { E.parseAsciiStl(stl); }, /exactly 3 vertices/);
+});
+
+test('parseAsciiStl rejects stray vertices and non-STL garbage', function () {
+  assert.throws(function () {
+    E.parseAsciiStl('solid s\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nvertex 0 1 0\nendloop\nvertex 0 0 0\nendsolid');
+  }, /outside facet loop/);
+  assert.throws(function () { E.parseAsciiStl('garbage text'); }, /not an ASCII STL/);
+  assert.throws(function () { E.parseAsciiStl(''); }, /not an ASCII STL/);
+  assert.throws(function () {
+    E.parseAsciiStl('solid s\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nendloop\nendsolid');
+  }, /exactly 3 vertices/);
+  assert.throws(function () { E.parseAsciiStl('solid s\nvertex 0 0 0\nendsolid'); }, /inside a facet/);
+  // A well-formed empty solid is still accepted.
+  var empty = E.parseAsciiStl('solid s\nendsolid');
+  assert.equal(empty.faces.length, 0);
+});
+
+test('exportAsciiStl refuses to write non-finite vertex coordinates', function () {
+  var bad = { vertices: [[NaN, 0, 0], [1, 0, 0], [0, 1, 0]], faces: [[0, 1, 2]] };
+  assert.throws(function () { E.exportAsciiStl(bad, 'bad'); }, /non-finite vertex/);
+  var inf = { vertices: [[Infinity, 0, 0], [1, 0, 0], [0, 1, 0]], faces: [[0, 1, 2]] };
+  assert.throws(function () { E.exportAsciiStl(inf, 'bad'); }, /non-finite vertex/);
+  var good = { vertices: [[0, 0, 0], [1, 0, 0], [0, 1, 0]], faces: [[0, 1, 2]] };
+  assert.match(E.exportAsciiStl(good, 'ok'), /facet normal/);
+});
+
+test('solar primitives reject out-of-range and non-finite day-of-year', function () {
+  assert.throws(function () { E.computeDeclination(0); }, /dayOfYear/);
+  assert.throws(function () { E.computeDeclination(367); }, /dayOfYear/);
+  assert.throws(function () { E.computeDeclination(NaN); }, /dayOfYear/);
+  assert.throws(function () { E.computeEquationOfTime(0); }, /dayOfYear/);
+  assert.throws(function () { E.computeEquationOfTime(1e9); }, /dayOfYear/);
+  assert.ok(Math.abs(E.computeDeclination(80)) < 1);
+  assert.ok(Math.abs(E.computeEquationOfTime(80)) < 20);
+});
+
+test('angle helpers throw on non-finite input instead of emitting NaN', function () {
+  assert.throws(function () { E.beamAttenuation(NaN); }, /elevationDeg/);
+  assert.throws(function () { E.sunVectorFromAngles(NaN, 0); }, /azimuthDeg/);
+  assert.throws(function () { E.angularSeparationDeg(NaN, 0, 0, 0); }, /azA/);
+  assert.throws(function () { E.stereographicProject(NaN, 0, 1); }, /azimuthDeg/);
+  assert.throws(function () { E.stereographicProject(0, 45, NaN); }, /radius/);
+});
+
+test('computeGimbalPose rejects a malformed sun vector', function () {
+  assert.throws(function () { E.computeGimbalPose({}, {}); }, /sun\.azimuthDeg/);
+  assert.throws(function () { E.computeGimbalPose({ azimuthDeg: NaN, elevationDeg: 10 }, {}); }, /sun\.azimuthDeg/);
+});
+
+test('mergeMeshes and cameraBasis fail loudly on malformed input', function () {
+  assert.throws(function () { E.mergeMeshes(null); }, /array/);
+  assert.throws(function () { E.mergeMeshes([null]); }, /vertices/);
+  assert.throws(function () { E.mergeMeshes([{}]); }, /vertices/);
+  assert.throws(function () { E.cameraBasis({}); }, /cam\.yaw/);
+  var cam = E.makeCamera({});
+  var basis = E.cameraBasis(cam);
+  assert.ok(Number.isFinite(basis.forward[0]));
+});
