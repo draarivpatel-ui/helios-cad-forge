@@ -111,6 +111,9 @@
 
   /** Clock time to apparent solar time, in hours. */
   function clockToSolarHour(clockHour, longitude, utcOffsetHours, dayOfYear) {
+    requireFinite('clockHour', clockHour);
+    requireFinite('longitude', longitude);
+    requireFinite('utcOffsetHours', utcOffsetHours);
     var eot = computeEquationOfTime(dayOfYear, clockHour);
     return clockHour + (4 * (longitude - 15 * utcOffsetHours) + eot) / 60;
   }
@@ -129,6 +132,7 @@
    * Atmospheric refraction is not modelled.
    */
   function computeSolarPosition(opts) {
+    opts = opts || {};
     var latitude = requireRange('latitude', opts.latitude, -89, 89);
     var dayOfYear = requireRange('dayOfYear', opts.dayOfYear, 1, 366);
     var solarHour;
@@ -182,6 +186,7 @@
 
   /** Daytime sun positions at a fixed interval (elevation above 0 only). */
   function computeSunPath(opts) {
+    opts = opts || {};
     var step = opts.stepMinutes === undefined ? 15 : opts.stepMinutes;
     requireRange('stepMinutes', step, 1, 120);
     var points = [];
@@ -214,6 +219,7 @@
    * otherwise it is plain geometric hours of cosine-weighted sun.
    */
   function computeOptimalTiltGain(opts) {
+    opts = opts || {};
     var latitude = requireRange('latitude', opts.latitude, -89, 89);
     var dayOfYear = requireRange('dayOfYear', opts.dayOfYear, 1, 366);
     var stepMinutes = opts.stepMinutes === undefined ? 6 : opts.stepMinutes;
@@ -446,6 +452,16 @@
     var lim = limits || DEFAULT_LIMITS;
     requireFinite('sun.azimuthDeg', sun.azimuthDeg);
     requireFinite('sun.elevationDeg', sun.elevationDeg);
+    requireFinite('limits.azMin', lim.azMin);
+    requireFinite('limits.azMax', lim.azMax);
+    requireFinite('limits.elMin', lim.elMin);
+    requireFinite('limits.elMax', lim.elMax);
+    if (!(lim.azMin < lim.azMax)) {
+      fail('azimuth limits must satisfy azMin < azMax');
+    }
+    if (!(lim.elMin < lim.elMax)) {
+      fail('elevation limits must satisfy elMin < elMax');
+    }
     var train = computeGearTrainMetrics(input);
     var azimuthDeg = clamp(sun.azimuthDeg, lim.azMin, lim.azMax);
     var elevationDeg = clamp(sun.elevationDeg, lim.elMin, lim.elMax);
@@ -518,6 +534,7 @@
       if (!Array.isArray(profile[j]) || profile[j].length < 2) {
         fail('profile points must be [radius, z] pairs');
       }
+      requireFinite('profile radius', profile[j][0]);
       if (!(profile[j][0] > 0)) {
         fail('profile radius must stay above zero');
       }
@@ -566,6 +583,10 @@
     if (poly.length < 3) {
       fail('polygon needs at least 3 points');
     }
+    poly.forEach(function (pt, i) {
+      requireFinite('polygon point ' + i + ' x', pt && pt[0]);
+      requireFinite('polygon point ' + i + ' z', pt && pt[1]);
+    });
     if (polygonArea(poly) <= 0) {
       fail('polygon must be counter-clockwise');
     }
@@ -604,6 +625,11 @@
       if (!clipped) {
         fail('triangulation failed: polygon is not simple');
       }
+    }
+    var t0 = poly[idx[0]], t1 = poly[idx[1]], t2 = poly[idx[2]];
+    var lastCross = (t1[0] - t0[0]) * (t2[1] - t0[1]) - (t1[1] - t0[1]) * (t2[0] - t0[0]);
+    if (Math.abs(lastCross) < 1e-12) {
+      fail('triangulation failed: polygon is not simple');
     }
     tris.push([idx[0], idx[1], idx[2]]);
     return tris;
@@ -795,12 +821,12 @@
     return extrudePolygonXZ(yokeOutline(layout), layout.yoke.depth);
   }
 
-  var PART_IDS = ['base', 'wheel', 'yoke', 'panel', 'pcb', 'sensors'];
+  var PART_IDS = Object.freeze(['base', 'wheel', 'yoke', 'panel', 'pcb', 'sensors']);
 
   var STL_PARTS = Object.freeze([
-    { id: 'base', file: 'helios_base.stl', solid: 'helios_base' },
-    { id: 'wheel', file: 'helios_worm_gear.stl', solid: 'helios_worm_gear' },
-    { id: 'yoke', file: 'helios_yoke.stl', solid: 'helios_yoke' }
+    Object.freeze({ id: 'base', file: 'helios_base.stl', solid: 'helios_base' }),
+    Object.freeze({ id: 'wheel', file: 'helios_worm_gear.stl', solid: 'helios_worm_gear' }),
+    Object.freeze({ id: 'yoke', file: 'helios_yoke.stl', solid: 'helios_yoke' })
   ]);
 
   function mergeMeshes(meshes) {
@@ -869,6 +895,9 @@
     var explode = clamp(state && state.explode !== undefined ? state.explode : 0, 0, 1);
     var az = state && state.azimuthDeg !== undefined ? state.azimuthDeg : 180;
     var el = state && state.elevationDeg !== undefined ? state.elevationDeg : 60;
+    requireFinite('explode', explode);
+    requireFinite('azimuthDeg', az);
+    requireFinite('elevationDeg', el);
     var e = explode * EXPLODE_SPACING_MM;
     var yoke = layout.yoke;
     function spin(p) { return rotateAboutZ(p, -az); }
@@ -937,6 +966,8 @@
     var edgeUse = {};
     var directed = {};
     var used = {};
+    var linkEdges = {};
+    var validFaces = [];
     var degenerate = 0;
     var badIndex = 0;
     var parent = {};
@@ -964,6 +995,14 @@
       if (!ok) {
         badIndex++;
         return;
+      }
+      validFaces.push(f);
+      for (var lc = 0; lc < 3; lc++) {
+        var lv = f[lc];
+        var la = f[(lc + 1) % 3];
+        var lb = f[(lc + 2) % 3];
+        if (!linkEdges[lv]) { linkEdges[lv] = {}; }
+        linkEdges[lv][la < lb ? la + ',' + lb : lb + ',' + la] = 1;
       }
       if (f[0] === f[1] || f[1] === f[2] || f[0] === f[2] ||
           triangleArea(mesh.vertices[f[0]], mesh.vertices[f[1]], mesh.vertices[f[2]]) < 1e-12) {
@@ -1000,29 +1039,64 @@
     var roots = {};
     Object.keys(used).forEach(function (v) { roots[find(Number(v))] = 1; });
     var shells = Object.keys(roots).length;
+
+    // Vertex-manifoldness: the faces incident on each vertex must form a
+    // single fan, i.e. its link is one connected chain of degree-2 links.
+    var nonManifoldVertices = 0;
+    Object.keys(linkEdges).forEach(function (v) {
+      var edges = Object.keys(linkEdges[v]).map(function (k) { return k.split(',').map(Number); });
+      var degree = {};
+      edges.forEach(function (e) {
+        degree[e[0]] = (degree[e[0]] || 0) + 1;
+        degree[e[1]] = (degree[e[1]] || 0) + 1;
+      });
+      var seen = {};
+      var components = 0;
+      var overSharedLink = false;
+      Object.keys(degree).forEach(function (start) {
+        if (degree[start] > 2) { overSharedLink = true; }
+        if (seen[start]) { return; }
+        components++;
+        var stack = [Number(start)];
+        while (stack.length) {
+          var u = stack.pop();
+          if (seen[u]) { continue; }
+          seen[u] = 1;
+          edges.forEach(function (e) {
+            if (e[0] === u) { stack.push(e[1]); }
+            if (e[1] === u) { stack.push(e[0]); }
+          });
+        }
+      });
+      if (components !== 1 || overSharedLink) { nonManifoldVertices++; }
+    });
+
     var vertexCount = Object.keys(used).length;
     var faceCount = mesh.faces.length;
     var euler = vertexCount - edgeCount + faceCount;
-    var volume = computeMeshVolume(mesh);
+    var genus = (2 * shells - euler) / 2;
+    var safeMesh = { vertices: mesh.vertices, faces: validFaces };
+    var volume = computeMeshVolume(safeMesh);
     var closed = boundaryEdges === 0 && nonManifoldEdges === 0 && inconsistentEdges === 0 &&
-      degenerate === 0 && badIndex === 0 && faceCount > 0;
+      nonManifoldVertices === 0 && degenerate === 0 && badIndex === 0 && faceCount > 0;
     return {
       vertexCount: vertexCount,
       edgeCount: edgeCount,
       faceCount: faceCount,
       eulerCharacteristic: euler,
       shells: shells,
-      genus: (2 * shells - euler) / 2,
+      genus: genus,
       boundaryEdges: boundaryEdges,
       nonManifoldEdges: nonManifoldEdges,
+      nonManifoldVertices: nonManifoldVertices,
       inconsistentEdges: inconsistentEdges,
       degenerateFaces: degenerate,
       invalidIndices: badIndex,
       volume: volume,
-      surfaceArea: computeMeshArea(mesh),
-      bounds: computeMeshBounds(mesh),
+      surfaceArea: computeMeshArea(safeMesh),
+      bounds: computeMeshBounds(safeMesh),
       isWatertight: closed,
-      isManifold: closed && volume > 0
+      isManifold: closed && volume > 0 && genus >= 0 && genus === Math.round(genus)
     };
   }
 
@@ -1034,7 +1108,8 @@
   }
 
   function exportAsciiStl(mesh, name) {
-    var lines = ['solid ' + (name || 'helios')];
+    var solid = String(name || 'helios').replace(/[^A-Za-z0-9_.-]+/g, '_');
+    var lines = ['solid ' + solid];
     mesh.faces.forEach(function (f) {
       var a = mesh.vertices[f[0]];
       var b = mesh.vertices[f[1]];
@@ -1053,7 +1128,7 @@
       lines.push('    endloop');
       lines.push('  endfacet');
     });
-    lines.push('endsolid ' + (name || 'helios'));
+    lines.push('endsolid ' + solid);
     return lines.join('\n') + '\n';
   }
 
@@ -1092,7 +1167,7 @@
         faces.push(current);
         current = [];
         inLoop = false;
-      } else if (t.indexOf('vertex ') === 0) {
+      } else if (/^vertex\s/.test(t)) {
         if (sawLoopMarker && !inLoop) {
           fail('vertex outside facet loop on line ' + (i + 1));
         }
@@ -1257,7 +1332,7 @@
 
   var ISO_CAMERA = Object.freeze({
     yaw: 45, pitch: Math.atan(1 / Math.SQRT2) / DEG, zoom: 1, distance: 420, projection: 'isometric',
-    target: [0, 0, 40]
+    target: Object.freeze([0, 0, 40])
   });
 
   function makeCamera(overrides) {
@@ -1272,6 +1347,12 @@
     if (overrides) {
       Object.keys(overrides).forEach(function (k) { cam[k] = overrides[k]; });
     }
+    if (!Array.isArray(cam.target) || cam.target.length < 3 ||
+        !isFinite(cam.target[0]) || !isFinite(cam.target[1]) || !isFinite(cam.target[2])) {
+      fail('camera target must be a finite [x, y, z] vector');
+    }
+    requireFinite('cam.yaw', cam.yaw);
+    requireFinite('cam.distance', cam.distance);
     cam.pitch = clamp(cam.pitch, -89, 89);
     cam.zoom = clamp(cam.zoom, 0.2, 8);
     return cam;

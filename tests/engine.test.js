@@ -1179,3 +1179,75 @@ test('mergeMeshes and cameraBasis fail loudly on malformed input', function () {
   var basis = E.cameraBasis(cam);
   assert.ok(Number.isFinite(basis.forward[0]));
 });
+
+/* --------------- adversarial tester regression tests (round 2) ------------ */
+
+test('validateMeshManifold reports invalidIndices instead of crashing', function () {
+  var m = E.validateMeshManifold({ vertices: [[0, 0, 0], [1, 0, 0], [0, 1, 0]], faces: [[0, 1, 99]] });
+  assert.equal(m.invalidIndices, 1);
+  assert.equal(m.isWatertight, false);
+  assert.equal(m.isManifold, false);
+  var m2 = E.validateMeshManifold({ vertices: [[0, 0, 0], [1, 0, 0], [0, 1, 0]], faces: [[0, 1.5, 2]] });
+  assert.equal(m2.invalidIndices, 1);
+});
+
+test('validateMeshManifold rejects a vertex-pinched solid', function () {
+  // Two tetrahedra sharing exactly one vertex: edges all check out but the
+  // shared vertex link is two disjoint fans - not a manifold point.
+  var V = [[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4], [-4, 0, 0], [0, -4, 0], [0, 0, -4]];
+  var F = [[0, 2, 1], [0, 3, 2], [0, 1, 3], [1, 2, 3], [0, 5, 4], [0, 6, 5], [0, 4, 6], [4, 5, 6]];
+  var m = E.validateMeshManifold({ vertices: V, faces: F });
+  assert.ok(m.nonManifoldVertices >= 1);
+  assert.equal(m.isManifold, false);
+});
+
+test('generateRevolveMesh rejects non-finite profile radius', function () {
+  assert.throws(function () { E.generateRevolveMesh([[Infinity, 0], [5, 0], [5, 5]], 8); }, /profile radius/);
+  assert.throws(function () { E.generateRevolveMesh([[NaN, 0], [5, 0], [5, 5]], 8); }, /profile radius/);
+});
+
+test('triangulatePolygon and extrudePolygonXZ reject non-finite points', function () {
+  assert.throws(function () { E.triangulatePolygon([[0, 0], [Infinity, 0], [1, 1], [0, 1]]); }, /finite|point/);
+  assert.throws(function () { E.extrudePolygonXZ([[0, 0], [NaN, 0], [1, 1], [0, 1]], 2); }, /finite|point/);
+  assert.throws(function () { E.triangulatePolygon([[0, 0], [4, 0], [2, 0], [4, 4], [0, 4]]); }, /not simple/);
+});
+
+test('parseAsciiStl accepts tab-separated vertex lines', function () {
+  var t = ['solid t', 'facet normal 0 0 1', 'outer loop',
+    'vertex\t0\t0\t0', 'vertex\t1\t0\t0', 'vertex\t0\t1\t0',
+    'endloop', 'endfacet', 'endsolid t'].join('\n');
+  var m = E.parseAsciiStl(t);
+  assert.equal(m.faces.length, 1);
+  assert.equal(m.vertices.length, 3);
+});
+
+test('computeGimbalPose validates axis limits ordering', function () {
+  var s = E.computeSolarPosition({ latitude: 38.9, dayOfYear: 172, solarHour: 13.5 });
+  assert.throws(function () { E.computeGimbalPose(s, {}, { azMin: 300, azMax: 100, elMin: 0, elMax: 90 }); }, /azMin/);
+  assert.throws(function () { E.computeGimbalPose(s, {}, { azMin: 0, azMax: 180, elMin: 80, elMax: 10 }); }, /elMin/);
+  assert.throws(function () { E.computeGimbalPose(s, {}, { azMin: NaN, azMax: 180, elMin: 0, elMax: 90 }); }, /azMin/);
+});
+
+test('exportAsciiStl sanitizes the solid name against newline injection', function () {
+  var stl = E.exportAsciiStl(E.generateBoxMesh([1, 1, 1]), 'a\nendsolid fake');
+  var firstLines = stl.split('\n').slice(0, 2);
+  assert.equal(firstLines[0], 'solid a_endsolid_fake');
+  assert.ok(!/^endsolid/.test(firstLines[1]));
+});
+
+test('exported constants are deeply immutable', function () {
+  assert.throws(function () { E.PART_IDS.push('evil'); }, TypeError);
+  assert.throws(function () { E.STL_PARTS[0].file = 'x.stl'; }, TypeError);
+  assert.throws(function () { E.ISO_CAMERA.target[0] = 999; }, TypeError);
+  var cam = E.makeCamera();
+  assert.equal(cam.target[0], 0);
+});
+
+test('remaining public helpers validate finite input', function () {
+  assert.throws(function () { E.clockToSolarHour(NaN, 0, 0, 172); }, /clockHour/);
+  assert.throws(function () { E.makeCamera({ target: [0, 0] }); }, /target/);
+  assert.throws(function () { E.makeCamera({ target: [NaN, 0, 0] }); }, /target/);
+  assert.throws(function () { E.buildAssemblyScene({}, { explode: NaN }); }, /explode/);
+  assert.throws(function () { E.computeSolarPosition(); }, /latitude/);
+  assert.throws(function () { E.computeSunPath(); }, /stepMinutes|latitude/);
+});
