@@ -163,6 +163,8 @@
 
   /** Sunrise to sunset length in hours (0 for polar night, 24 for polar day). */
   function computeDaylightHours(latitude, dayOfYear) {
+    requireRange('latitude', latitude, -89, 89);
+    requireRange('dayOfYear', dayOfYear, 1, 366);
     var delta = computeDeclination(dayOfYear, 12) * DEG;
     var x = -Math.tan(latitude * DEG) * Math.tan(delta);
     if (x >= 1) {
@@ -464,6 +466,9 @@
   /** Axis-aligned box with outward-facing triangles. */
   function generateBoxMesh(size, origin) {
     var o = origin || [0, 0, 0];
+    requireFinite('origin.x', o[0]);
+    requireFinite('origin.y', o[1]);
+    requireFinite('origin.z', o[2]);
     var sx = requireRange('size.x', size[0], 0.01, 10000);
     var sy = requireRange('size.y', size[1], 0.01, 10000);
     var sz = requireRange('size.z', size[2], 0.01, 10000);
@@ -490,7 +495,7 @@
    * axis, which gives a torus-topology solid with outward normals.
    */
   function generateRevolveMesh(profile, segments) {
-    var n = segments;
+    var n = requireInteger('segments', segments, 3, 1024);
     var m = profile.length;
     if (m < 3) {
       fail('profile needs at least 3 points');
@@ -499,9 +504,13 @@
     var j;
     var i;
     for (j = 0; j < m; j++) {
+      if (!Array.isArray(profile[j]) || profile[j].length < 2) {
+        fail('profile points must be [radius, z] pairs');
+      }
       if (!(profile[j][0] > 0)) {
         fail('profile radius must stay above zero');
       }
+      requireFinite('profile z', profile[j][1]);
       for (i = 0; i < n; i++) {
         var a = (TAU * i) / n;
         vertices.push([profile[j][0] * Math.cos(a), profile[j][0] * Math.sin(a), profile[j][1]]);
@@ -1040,10 +1049,16 @@
         if (parts.length !== 3) {
           fail('bad vertex line ' + (i + 1));
         }
+        var coords = parts.map(parseFloat);
+        for (var c = 0; c < 3; c++) {
+          if (!isFinite(coords[c]) || !/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(parts[c].trim())) {
+            fail('non-finite vertex coordinate on line ' + (i + 1));
+          }
+        }
         var key = parts.map(function (s) { return formatStlNumber(parseFloat(s)); }).join(' ');
         if (weld[key] === undefined) {
           weld[key] = vertices.length;
-          vertices.push(parts.map(parseFloat));
+          vertices.push(coords);
         }
         current.push(weld[key]);
         if (current.length === 3) {

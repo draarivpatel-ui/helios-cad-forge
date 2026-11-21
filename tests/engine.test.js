@@ -450,3 +450,656 @@ test('computeOptimalTiltGain and computeSpurMetrics respect both default and exp
   assert.equal(spur145.minTeethNoUndercut, 32);
   assert.ok(spur145.baseDiameter > spurDefault.baseDiameter);
 });
+
+/* ------------------------- hardening regression tests --------------------- */
+
+test('computeDaylightHours rejects non-finite or out-of-range inputs', () => {
+  assert.throws(() => E.computeDaylightHours(NaN, 172), RangeError);
+  assert.throws(() => E.computeDaylightHours(90.1, 172), RangeError);
+  assert.throws(() => E.computeDaylightHours(-95, 172), RangeError);
+  assert.throws(() => E.computeDaylightHours(30, 0), RangeError);
+  assert.throws(() => E.computeDaylightHours(30, 367), RangeError);
+  assert.throws(() => E.computeDaylightHours(30, NaN), RangeError);
+});
+
+test('computeDaylightHours is finite and bounded at both range edges', () => {
+  for (const doy of [1, 172, 365, 366]) {
+    const h = E.computeDaylightHours(89, doy);
+    assert.ok(Number.isFinite(h) && h >= 0 && h <= 24);
+    const h2 = E.computeDaylightHours(-89, doy);
+    assert.ok(Number.isFinite(h2) && h2 >= 0 && h2 <= 24);
+  }
+});
+
+test('generateRevolveMesh rejects invalid segment counts', () => {
+  const profile = [[2, 0], [5, 0], [5, 5], [2, 5]];
+  for (const bad of [0, 1, 2, 2.5, -4, NaN, Infinity, 'abc']) {
+    assert.throws(() => E.generateRevolveMesh(profile, bad), RangeError, `segments=${bad}`);
+  }
+  const ok = E.generateRevolveMesh(profile, 3);
+  assert.equal(ok.faces.length, 3 * profile.length * 2);
+  assert.ok(E.validateMeshManifold(ok).isWatertight);
+});
+
+test('generateRevolveMesh rejects malformed or non-finite profile points', () => {
+  const segs = 16;
+  assert.throws(() => E.generateRevolveMesh([[2, 0], [5], [5, 5]], segs), RangeError);
+  assert.throws(() => E.generateRevolveMesh([[2, 0], [5, NaN], [5, 5]], segs), RangeError);
+  assert.throws(() => E.generateRevolveMesh([[2, 0], [5, Infinity], [5, 5]], segs), RangeError);
+  assert.throws(() => E.generateRevolveMesh([[2, 0], 'x', [5, 5]], segs), RangeError);
+});
+
+test('generateBoxMesh rejects non-finite origin and size components', () => {
+  assert.throws(() => E.generateBoxMesh([NaN, 1, 1]), RangeError);
+  assert.throws(() => E.generateBoxMesh([1, 1, 1], [NaN, 0, 0]), RangeError);
+  assert.throws(() => E.generateBoxMesh([1, 1, 1], [0, Infinity, 0]), RangeError);
+  assert.throws(() => E.generateBoxMesh([1, 1, 1], [0, 0, 'x']), RangeError);
+});
+
+test('parseAsciiStl rejects non-finite vertex coordinates', () => {
+  const mk = (x) => 'solid s\nvertex ' + x + '\nvertex 0 1 0\nvertex 1 0 0\nendsolid s\n';
+  assert.throws(() => E.parseAsciiStl(mk('NaN 0 0')), RangeError);
+  assert.throws(() => E.parseAsciiStl(mk('0 NaN 0')), RangeError);
+  assert.throws(() => E.parseAsciiStl(mk('0 0 NaN')), RangeError);
+  assert.throws(() => E.parseAsciiStl(mk('Infinity 0 0')), RangeError);
+  assert.throws(() => E.parseAsciiStl(mk('-inf 0 0')), RangeError);
+  const ok = E.parseAsciiStl(mk('0 0 0'));
+  assert.equal(ok.vertices.length, 3);
+  assert.equal(ok.faces.length, 1);
+});
+
+test('committed cad STL artifacts re-parse into watertight manifolds', () => {
+  for (const part of E.STL_PARTS) {
+    const text = fs.readFileSync(path.join(ROOT, 'cad', part.file), 'utf8');
+    const mesh = E.parseAsciiStl(text);
+    const m = E.validateMeshManifold(mesh);
+    assert.ok(m.isWatertight, part.file + ' should parse watertight');
+    assert.ok(m.isManifold, part.file + ' should be a valid manifold');
+    assert.ok(m.volume > 0, part.file + ' should have positive volume');
+  }
+});
+
+test('exportAsciiStl round-trips every generated part through the strict parser', () => {
+  const meshes = E.generateAllPartMeshes({});
+  for (const id of E.PART_IDS) {
+    const stl = E.exportAsciiStl(meshes[id], 'part_' + id);
+    const back = E.parseAsciiStl(stl);
+    const m = E.validateMeshManifold(back);
+    assert.ok(m.isWatertight && m.isManifold, id + ' round-trip failed');
+  }
+});
+
+test('validateMeshManifold flags degenerate and NaN-coordinate faces', () => {
+  const deg = { vertices: [[0, 0, 0], [0, 0, 0], [1, 0, 0]], faces: [[0, 1, 2]] };
+  const md = E.validateMeshManifold(deg);
+  assert.ok(md.degenerate >= 1 || !md.isManifold);
+  const nan = { vertices: [[NaN, 0, 0], [0, 1, 0], [1, 0, 0]], faces: [[0, 1, 2]] };
+  const mn = E.validateMeshManifold(nan);
+  assert.ok(!mn.isManifold);
+});
+
+test('mergeMeshes offsets face indices and concatenates positions', () => {
+  const a = E.generateBoxMesh([2, 2, 2]);
+  const b = E.generateRevolveMesh([[2, 0], [4, 0], [4, 3], [2, 3]], 12);
+  const merged = E.mergeMeshes([a, b]);
+  assert.equal(merged.vertices.length, a.vertices.length + b.vertices.length);
+  assert.equal(merged.faces.length, a.faces.length + b.faces.length);
+  const firstOfB = merged.faces[a.faces.length];
+  for (const idx of firstOfB) assert.ok(idx >= a.vertices.length);
+});
+
+test('computeMeshVolume matches analytic volume for a box and a revolved toroid', () => {
+  const box = E.generateBoxMesh([3, 4, 5]);
+  assert.ok(Math.abs(E.computeMeshVolume(box) - 60) < 1e-9);
+  // Pappus for a square 2x2 section revolved about the axis at radius 4.
+  const tor = E.generateRevolveMesh([[3, -1], [5, -1], [5, 1], [3, 1]], 128);
+  const analytic = 2 * Math.PI * 4 * 4;
+  assert.ok(Math.abs(Math.abs(E.computeMeshVolume(tor)) - analytic) / analytic < 0.01);
+});
+
+test('computeMeshBounds reports exact extents for a translated box', () => {
+  const m = E.generateBoxMesh([2, 4, 6], [10, -3, 5]);
+  const b = E.computeMeshBounds(m);
+  assert.deepEqual(b.min, [10, -3, 5]);
+  assert.deepEqual(b.max, [12, 1, 11]);
+  assert.deepEqual(b.size, [2, 4, 6]);
+});
+
+test('angularSeparationDeg is 0 for identical and 180 for antipodal directions', () => {
+  assert.ok(Math.abs(E.angularSeparationDeg(30, 40, 30, 40)) < 1e-5);
+  assert.ok(Math.abs(E.angularSeparationDeg(0, 0, 180, 0) - 180) < 1e-6);
+  assert.ok(Math.abs(E.angularSeparationDeg(0, 0, 90, 0) - 90) < 1e-6);
+  assert.ok(Math.abs(E.angularSeparationDeg(0, 0, 0, 90) - 90) < 1e-6);
+});
+
+test('panelNormal is unit length and points straight up at elevation 90', () => {
+  const up = E.panelNormal(180, 90);
+  assert.ok(Math.abs(Math.hypot(up[0], up[1], up[2]) - 1) < 1e-9);
+  assert.ok(up[2] > 0.9999);
+  const flat = E.panelNormal(0, 0);
+  assert.ok(Math.abs(Math.hypot(flat[0], flat[1], flat[2]) - 1) < 1e-9);
+});
+
+test('stereographicProject puts the zenith at the dome centre and horizon on the rim', () => {
+  const c = E.stereographicProject(0, 90, 120);
+  assert.ok(Math.hypot(c.x, c.y) < 1e-6);
+  const rim = E.stereographicProject(0, 0, 120);
+  assert.ok(Math.abs(Math.hypot(rim.x, rim.y) - 120) < 1e-6);
+});
+
+test('beamAttenuation stays in (0, 1] and increases monotonically with elevation', () => {
+  let prev = -1;
+  for (const el of [1, 5, 15, 30, 60, 90]) {
+    const a = E.beamAttenuation(el);
+    assert.ok(a > 0 && a <= 1);
+    assert.ok(a > prev);
+    prev = a;
+  }
+  assert.equal(E.beamAttenuation(0), 0);
+  assert.equal(E.beamAttenuation(-10), 0);
+});
+
+test('computeOptimalTiltGain reports energy for all three surfaces and daylight', () => {
+  const g = E.computeOptimalTiltGain({ latitude: 38.9, dayOfYear: 172 });
+  // The dual-axis tracker must beat both fixed surfaces at midsummer.
+  assert.ok(g.trackerEnergy > g.fixedTiltEnergy);
+  assert.ok(g.trackerEnergy > g.horizontalEnergy);
+  assert.ok(g.daylightHours > 13 && g.daylightHours < 16);
+  assert.ok(g.gainVsFixedTilt > 1);
+  assert.ok(g.gainVsHorizontal > 1);
+  assert.ok(g.peakElevationDeg > 70);
+});
+
+test('computeOptimalTiltGain rejects invalid latitude or dayOfYear', () => {
+  assert.throws(() => E.computeOptimalTiltGain({ latitude: 95, dayOfYear: 100 }), RangeError);
+  assert.throws(() => E.computeOptimalTiltGain({ latitude: 30, dayOfYear: 0 }), RangeError);
+  assert.throws(() => E.computeOptimalTiltGain({ latitude: 30, dayOfYear: 400 }), RangeError);
+  assert.throws(() => E.computeOptimalTiltGain({ latitude: 30, dayOfYear: 172, stepMinutes: 0 }), RangeError);
+});
+
+test('computeSunPath at an equinox yields roughly a dozen elevated samples per hour-step', () => {
+  const pts = E.computeSunPath({ latitude: 38.9, dayOfYear: 80, stepMinutes: 60 });
+  assert.ok(pts.length >= 11 && pts.length <= 13, `got ${pts.length}`);
+  for (const p of pts) assert.ok(p.elevation > 0);
+  const dense = E.computeSunPath({ latitude: 38.9, dayOfYear: 80, stepMinutes: 15 });
+  assert.ok(dense.length >= 45 && dense.length <= 50, `got ${dense.length}`);
+});
+
+test('computeSolarPosition wraps azimuth into [0, 360) and reports hour angle', () => {
+  const am = E.computeSolarPosition({ latitude: 30, dayOfYear: 100, solarHour: 6 });
+  assert.ok(am.azimuthDeg >= 0 && am.azimuthDeg < 360);
+  assert.ok(Math.abs(am.hourAngleDeg + 90) < 1e-9);
+  const pm = E.computeSolarPosition({ latitude: 30, dayOfYear: 100, solarHour: 18 });
+  assert.ok(pm.hourAngleDeg === 90);
+  assert.ok(pm.azimuthDeg >= 0 && pm.azimuthDeg < 360);
+});
+
+test('clockToSolarHour applies longitude correction and equation of time', () => {
+  const h = E.clockToSolarHour(12, -95.4, -6, 172);
+  assert.ok(Number.isFinite(h));
+  const same = E.clockToSolarHour(12, -90, -6, 80);
+  assert.ok(Math.abs(same - 12 - E.computeEquationOfTime(80, 12) / 60) < 1e-9);
+});
+
+test('computeGimbalPose clamps azimuth to the configured travel window', () => {
+  const lim = { azMin: 45, azMax: 315, elMin: 5, elMax: 90 };
+  const pose = E.computeGimbalPose({ azimuthDeg: 350, elevationDeg: 40 }, {}, lim);
+  assert.equal(pose.limited, true);
+  assert.equal(pose.azimuthDeg, 315);
+  const free = E.computeGimbalPose({ azimuthDeg: 180, elevationDeg: 60 }, {}, lim);
+  assert.equal(free.limited, false);
+  assert.equal(free.azimuthDeg, 180);
+});
+
+test('computeGimbalPose clamps a below-horizon sun to the elevation floor', () => {
+  const lim = { azMin: 45, azMax: 315, elMin: 5, elMax: 90 };
+  const pose = E.computeGimbalPose({ azimuthDeg: 200, elevationDeg: -12 }, {}, lim);
+  assert.equal(pose.elevationDeg, 5);
+  assert.equal(pose.limited, true);
+  assert.ok(pose.pointingErrorDeg > 10);
+});
+
+test('triangulatePolygon yields n-2 triangles with total area equal to polygon area', () => {
+  const square = [[0, 0], [4, 0], [4, 4], [0, 4]];
+  const tris = E.triangulatePolygon(square);
+  assert.equal(tris.length, 2);
+  const hex = [[2, 0], [4, 1], [4, 3], [2, 4], [0, 3], [0, 1]];
+  const tris6 = E.triangulatePolygon(hex);
+  assert.equal(tris6.length, 4);
+  let area = 0;
+  for (const t of tris6) {
+    const a = hex[t[0]], b = hex[t[1]], c = hex[t[2]];
+    area += Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])) / 2;
+  }
+  assert.ok(Math.abs(area - E.polygonArea(hex)) < 1e-6);
+});
+
+test('extrudePolygonXZ makes a watertight prism with correct depth', () => {
+  const tri = E.extrudePolygonXZ([[0, 0], [4, 0], [0, 3]], 2);
+  const m = E.validateMeshManifold(tri);
+  assert.ok(m.isWatertight && m.isManifold);
+  assert.ok(Math.abs(m.volume - 12) < 1e-6);
+});
+
+test('generateGearOutline emits teeth * (2*flankSteps + 1) polar outline points', () => {
+  const pts = E.generateGearOutline({ teeth: 24, module: 1.5, pressureAngle: 20, flankSteps: 4, printTolerance: 0.1 });
+  assert.equal(pts.length, 264);
+  for (const p of pts) {
+    assert.ok(Number.isFinite(p.r) && Number.isFinite(p.a));
+  }
+});
+
+test('generateParametricGearMesh passes manifold and has a positive volume', () => {
+  const m = E.generatePartMesh('wheel', E.normalizeParams({}));
+  const v = E.validateMeshManifold(m);
+  assert.ok(v.isWatertight && v.isManifold);
+  assert.ok(v.volume > 0);
+});
+
+test('normalizeParams accepts boundary values at every slider edge', () => {
+  const p = E.normalizeParams({ module: 0.5, teeth: 80, wallThickness: 8, faceWidth: 20 });
+  assert.equal(p.module, 0.5);
+  assert.equal(p.teeth, 80);
+  const q = E.normalizeParams({ module: 4, teeth: 12, wallThickness: 1.2, faceWidth: 3 });
+  assert.equal(q.module, 4);
+  assert.equal(q.teeth, 12);
+});
+
+test('normalizeParams rejects a bore that would cut through the tooth roots', () => {
+  assert.throws(() => E.normalizeParams({ boreDiameter: 40, module: 0.5, teeth: 12 }), RangeError);
+});
+
+test('engine validators throw RangeError, not a bare Error or silent pass', () => {
+  try {
+    E.computeSolarPosition({ latitude: 200, dayOfYear: 1 });
+    assert.fail('expected throw');
+  } catch (e) {
+    assert.ok(e instanceof RangeError);
+  }
+});
+
+test('exportScad embeds the parametric constants and all five modules', () => {
+  const scad = E.exportScad({ module: 2, teeth: 30, wallThickness: 4 });
+  for (const needle of ['module_mm = 2;', 'teeth = 30;', 'wall = 4;',
+    'module base()', 'module wheel()', 'module yoke', 'module array', 'module assembly']) {
+    assert.ok(scad.includes(needle), 'missing ' + needle);
+  }
+});
+
+test('exportAsciiStl writes one facet per face and dedupes shared vertices', () => {
+  const box = E.generateBoxMesh([2, 2, 2]);
+  const stl = E.exportAsciiStl(box, 'testbox');
+  assert.ok(stl.startsWith('solid testbox'));
+  assert.ok(stl.trim().endsWith('endsolid testbox'));
+  assert.equal((stl.match(/facet normal/g) || []).length, 12);
+  assert.equal((stl.match(/vertex /g) || []).length, 36);
+});
+
+test('buildAssemblyScene returns all 6 parts and lifts them apart under explode', () => {
+  const meshes = E.generateAllPartMeshes({});
+  const packed = E.buildAssemblyScene({}, { explode: 0, azimuthDeg: 180, elevationDeg: 60 }, meshes);
+  assert.equal(packed.length, 6);
+  const blown = E.buildAssemblyScene({}, { explode: 1, azimuthDeg: 180, elevationDeg: 60 }, meshes);
+  const zOf = (m) => m.vertices.reduce((s, v) => s + v[2], 0) / m.vertices.length;
+  const packedWheel = packed.find((s) => s.id === 'wheel');
+  const blownWheel = blown.find((s) => s.id === 'wheel');
+  assert.ok(zOf(blownWheel.mesh) > zOf(packedWheel.mesh), 'explode must raise the wheel');
+});
+
+test('computeDaylightHours is symmetric about the solstices', () => {
+  const lat = 38.9;
+  const summer = E.computeDaylightHours(lat, 172);
+  const winter = E.computeDaylightHours(lat, 355);
+  assert.ok(Math.abs(summer + winter - 24) < 0.3);
+});
+
+test('computeSolarPosition elevation peaks at local solar noon', () => {
+  let maxEl = -99;
+  let noonEl = null;
+  for (let h = 4; h <= 20; h += 0.5) {
+    const el = E.computeSolarPosition({ latitude: 38.9, dayOfYear: 172, solarHour: h }).elevationDeg;
+    if (el > maxEl) maxEl = el;
+    if (Math.abs(h - 12) < 1e-9) noonEl = el;
+  }
+  assert.ok(Math.abs(maxEl - noonEl) < 0.5);
+});
+
+test('beamAttenuation at 90 degrees equals the zenith sea-level factor 0.7', () => {
+  assert.ok(Math.abs(E.beamAttenuation(90) - 0.7) < 1e-9);
+});
+
+/* ------------------------------------------------------- expansion block 2 */
+
+test('computeSpurMetrics derives pitch, outside and root diameters from module and teeth', () => {
+  const s = E.computeSpurMetrics(E.normalizeParams({}));
+  assert.equal(s.pitchDiameter, 1.5 * 24);
+  assert.equal(s.outsideDiameter, s.pitchDiameter + 2 * 1.5);
+  assert.equal(s.rootDiameter, s.pitchDiameter - 2.5 * 1.5);
+  assert.ok(Math.abs(s.circularPitch - Math.PI * 1.5) < 1e-12);
+});
+
+test('computeSpurMetrics minimum no-undercut teeth for 20 degree pressure angle', () => {
+  const s = E.computeSpurMetrics(E.normalizeParams({}));
+  assert.ok(s.minTeethNoUndercut >= 17 && s.minTeethNoUndercut <= 18);
+});
+
+test('computeSpurMetrics scales linearly with module', () => {
+  const a = E.computeSpurMetrics(E.normalizeParams({ module: 1 }));
+  const b = E.computeSpurMetrics(E.normalizeParams({ module: 2 }));
+  assert.ok(Math.abs(b.pitchDiameter - 2 * a.pitchDiameter) < 1e-9);
+});
+
+test('computeGearTrainMetrics ratio equals teeth over worm starts', () => {
+  const t = E.computeGearTrainMetrics(E.normalizeParams({}));
+  assert.equal(t.ratio, 24 / 1);
+  assert.equal(t.outputDegPerFullStep, 360 / (200 * 24));
+  assert.ok(Math.abs(t.outputDegPerFullStep - 0.075) < 1e-12);
+});
+
+test('computeGearTrainMetrics microsteps multiply output resolution', () => {
+  const t1 = E.computeGearTrainMetrics(E.normalizeParams({ microsteps: 1 }));
+  const t16 = E.computeGearTrainMetrics(E.normalizeParams({ microsteps: 16 }));
+  assert.ok(t16.microstepsPerOutputRev > t1.microstepsPerOutputRev);
+  assert.ok(t16.outputDegPerMicrostep < t1.outputDegPerMicrostep);
+});
+
+test('computeGearTrainMetrics defaults to a self-locking worm pair', () => {
+  const t = E.computeGearTrainMetrics(E.normalizeParams({}));
+  assert.equal(t.selfLocking, true);
+  assert.ok(t.lockMarginDeg > 0);
+  assert.ok(t.worm.leadAngleDeg < t.frictionAngleDeg);
+});
+
+test('computeGearTrainMetrics centerDistance sums worm and wheel pitch radii', () => {
+  const t = E.computeGearTrainMetrics(E.normalizeParams({}));
+  assert.ok(Math.abs(t.centerDistance - (t.worm.pitchDiameter + t.wheel.pitchDiameter) / 2) < 1e-9);
+});
+
+test('normalizeParams fills defaults and preserves valid overrides', () => {
+  const p = E.normalizeParams({ teeth: 32 });
+  assert.equal(p.teeth, 32);
+  assert.equal(p.module, E.DEFAULT_PARAMS.module);
+});
+
+test('normalizeParams rejects out-of-range parameter values', () => {
+  assert.throws(() => E.normalizeParams({ teeth: 1 }), RangeError);
+  assert.throws(() => E.normalizeParams({ module: 0 }), RangeError);
+  assert.throws(() => E.normalizeParams({ latitude: 100 }), RangeError);
+});
+
+test('extrudePolygonXZ produces a watertight prism with area-times-depth volume', () => {
+  const m = E.extrudePolygonXZ([[0, 0], [4, 0], [4, 3], [0, 3]], 6);
+  const v = E.validateMeshManifold(m);
+  assert.ok(v.isWatertight);
+  assert.ok(Math.abs(Math.abs(E.computeMeshVolume(m)) - 72) < 1e-9);
+  assert.equal(m.faces.length, 2 * (4 - 2) + 2 * 4);
+});
+
+test('triangulatePolygon handles a concave L-shape without losing area', () => {
+  const L = [[0, 0], [4, 0], [4, 2], [2, 2], [2, 4], [0, 4]];
+  const tris = E.triangulatePolygon(L);
+  assert.equal(tris.length, L.length - 2);
+  let area = 0;
+  for (const t of tris) {
+    area += Math.abs(
+      (L[t[1]][0] - L[t[0]][0]) * (L[t[2]][1] - L[t[0]][1]) -
+      (L[t[2]][0] - L[t[0]][0]) * (L[t[1]][1] - L[t[0]][1])
+    ) / 2;
+  }
+  assert.ok(Math.abs(area - 12) < 1e-9);
+});
+
+test('buildDrawList in perspective mode still produces shaded triangles', () => {
+  const p = E.normalizeParams({});
+  const scene = E.buildAssemblyScene(p, { explode: 0 }, E.generateAllPartMeshes(p));
+  const cam = E.makeCamera(p);
+  cam.projection = 'perspective';
+  const dl = E.buildDrawList(scene, cam, { width: 800, height: 600 });
+  assert.ok(dl.length > 0);
+  for (const d of dl) assert.ok(d.pts.every((pt) => Number.isFinite(pt[0]) && Number.isFinite(pt[1])));
+});
+
+test('rotateAboutZ by 90 degrees maps +X onto +Y', () => {
+  const r = E.rotateAboutZ([1, 0, 0], 90);
+  assert.ok(Math.abs(r[0]) < 1e-9 && Math.abs(r[1] - 1) < 1e-9);
+  const r2 = E.rotateAboutX([0, 1, 0], 90);
+  assert.ok(Math.abs(r2[1]) < 1e-9 && Math.abs(r2[2] - 1) < 1e-9);
+});
+
+test('mergeMeshes reindexes faces so they reference only their own vertices', () => {
+  const a = E.generateBoxMesh([1, 1, 1]);
+  const b = E.generateBoxMesh([2, 2, 2]);
+  const merged = E.mergeMeshes([a, b]);
+  assert.equal(merged.vertices.length, a.vertices.length + b.vertices.length);
+  const firstB = merged.faces[a.faces.length];
+  for (const idx of firstB) assert.ok(idx >= a.vertices.length);
+});
+
+test('validateMeshManifold flags an open surface as not watertight', () => {
+  const open = { vertices: [[0, 0, 0], [1, 0, 0], [0, 1, 0]], faces: [[0, 1, 2]] };
+  const v = E.validateMeshManifold(open);
+  assert.equal(v.isWatertight, false);
+});
+
+test('validateMeshManifold flags an edge shared by three triangles', () => {
+  const mesh = {
+    vertices: [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [0, -1, 0]],
+    faces: [[0, 1, 2], [0, 1, 3], [1, 0, 4]]
+  };
+  const v = E.validateMeshManifold(mesh);
+  assert.equal(v.isManifold, false);
+});
+
+test('validateMeshManifold flags inward-facing triangles on a closed box', () => {
+  const box = E.generateBoxMesh([2, 2, 2]);
+  box.faces[0] = [box.faces[0][0], box.faces[0][2], box.faces[0][1]];
+  const v = E.validateMeshManifold(box);
+  assert.ok(v.isWatertight === false || v.isManifold === false || v.isConsistentlyOriented === false);
+});
+
+test('computeMeshArea returns exact surface area for a box', () => {
+  const m = E.generateBoxMesh([3, 4, 5]);
+  assert.ok(Math.abs(E.computeMeshArea(m) - 94) < 1e-9);
+});
+
+test('computeMeshBounds on the empty mesh returns zero extents', () => {
+  const b = E.computeMeshBounds({ vertices: [], faces: [] });
+  assert.deepEqual(b.min, [0, 0, 0]);
+  assert.deepEqual(b.size, [0, 0, 0]);
+});
+
+test('generateAllPartMeshes returns a watertight mesh for every PART_IDS entry', () => {
+  const meshes = E.generateAllPartMeshes(E.normalizeParams({}));
+  for (const id of E.PART_IDS) {
+    const v = E.validateMeshManifold(meshes[id]);
+    assert.ok(v.isWatertight, id + ' should be watertight');
+    assert.ok(E.computeMeshVolume(meshes[id]) !== 0, id + ' should have nonzero volume');
+  }
+});
+
+test('PART_IDS and STL_PARTS agree and stay at six parts', () => {
+  assert.equal(E.PART_IDS.length, 6);
+  assert.equal(E.STL_PARTS.length, 3);
+  for (const entry of E.STL_PARTS) {
+    assert.ok(E.PART_IDS.includes(entry.id));
+    assert.ok(entry.file.endsWith('.stl'));
+  }
+});
+
+test('generatePartMesh throws for an unknown part id', () => {
+  assert.throws(() => E.generatePartMesh('flux-capacitor', E.normalizeParams({})), /unknown part/);
+});
+
+test('generateBaseMesh and generateYokeMesh are watertight', () => {
+  const p = E.normalizeParams({});
+  assert.ok(E.validateMeshManifold(E.generateBaseMesh(p)).isWatertight);
+  assert.ok(E.validateMeshManifold(E.generateYokeMesh(p)).isWatertight);
+});
+
+test('sensors part is four detached 4x4x2mm boxes', () => {
+  const m = E.generatePartMesh('sensors', E.normalizeParams({}));
+  assert.equal(m.vertices.length, 32);
+  assert.ok(Math.abs(Math.abs(E.computeMeshVolume(m)) - 128) < 1e-9);
+});
+
+test('exportAsciiStl emits unit facet normals and one facet per triangle', () => {
+  const box = E.generateBoxMesh([2, 2, 2]);
+  const stl = E.exportAsciiStl(box, 'unit');
+  const normals = stl.match(/facet normal [^\n]+/g) || [];
+  assert.equal(normals.length, box.faces.length);
+  for (const line of normals) {
+    const c = line.replace('facet normal', '').trim().split(/\s+/).map(Number);
+    assert.ok(Math.abs(Math.hypot(c[0], c[1], c[2]) - 1) < 1e-6, line);
+  }
+});
+
+test('exportAsciiStl output round-trips through parseAsciiStl', () => {
+  const box = E.generateBoxMesh([2, 3, 4]);
+  const stl = E.exportAsciiStl(box, 'rt');
+  const back = E.parseAsciiStl(stl);
+  assert.equal(back.faces.length, box.faces.length);
+  assert.ok(Math.abs(Math.abs(E.computeMeshVolume(back)) - 24) < 1e-6);
+});
+
+test('parseAsciiStl rejects vertices with trailing garbage after the number', () => {
+  const bad = ['solid t', 'facet normal 0 0 1', 'outer loop',
+    'vertex 1.5abc 0 0', 'vertex 1 0 0', 'vertex 0 1 0',
+    'endloop', 'endfacet', 'endsolid t'].join('\n');
+  assert.throws(() => E.parseAsciiStl(bad), /non-finite|bad vertex/);
+});
+
+test('parseAsciiStl parses a single-triangle solid', () => {
+  const stl = ['solid t', 'facet normal 0 0 1', 'outer loop',
+    'vertex 0 0 0', 'vertex 1 0 0', 'vertex 0 1 0',
+    'endloop', 'endfacet', 'endsolid t'].join('\n');
+  const m = E.parseAsciiStl(stl);
+  assert.equal(m.faces.length, 1);
+  assert.equal(m.vertices.length, 3);
+});
+
+test('exportScad emits module text with no NaN or Infinity tokens', () => {
+  const scad = E.exportScad(E.normalizeParams({}));
+  assert.ok(scad.includes('module'));
+  assert.ok(!/NaN|Infinity/.test(scad));
+  assert.ok(scad.length > 1000);
+});
+
+test('exportScad rejects invalid input rather than emitting broken source', () => {
+  assert.throws(() => E.exportScad({ teeth: 1 }));
+});
+
+test('makeCamera clamps pitch and zoom to their allowed windows', () => {
+  const c = E.makeCamera({ pitch: 95, zoom: 99 });
+  assert.equal(c.pitch, 89);
+  assert.equal(c.zoom, 8);
+  const c2 = E.makeCamera({ pitch: -95, zoom: 0.001 });
+  assert.equal(c2.pitch, -89);
+  assert.equal(c2.zoom, 0.2);
+});
+
+test('projectPoint maps the camera target to the viewport centre in isometric mode', () => {
+  const p = E.normalizeParams({});
+  const cam = E.makeCamera(p);
+  const pr = E.projectPoint(cam.target, cam, { width: 800, height: 600 });
+  assert.ok(Math.abs(pr.x - 400) < 1e-6);
+  assert.ok(Math.abs(pr.y - 300) < 1e-6);
+});
+
+test('buildDrawList culls back faces and sorts far-to-near', () => {
+  const p = E.normalizeParams({});
+  const meshes = E.generateAllPartMeshes(p);
+  const scene = E.buildAssemblyScene(p, { explode: 0 }, meshes);
+  const total = Object.values(meshes).reduce((s, m) => s + m.faces.length, 0);
+  const dl = E.buildDrawList(scene, E.makeCamera(p), { width: 800, height: 600 });
+  assert.ok(dl.length < total);
+  for (let i = 1; i < dl.length; i++) assert.ok(dl[i - 1].depth >= dl[i].depth - 1e-9);
+  for (const d of dl) assert.ok(d.shade >= 0 && d.shade <= 1 && d.pts.length === 3);
+});
+
+test('sunVectorFromAngles is unit length and north-facing at azimuth zero', () => {
+  const n = E.sunVectorFromAngles(0, 0);
+  assert.ok(Math.abs(Math.hypot(n[0], n[1], n[2]) - 1) < 1e-9);
+  assert.ok(n[1] > 0.999 && Math.abs(n[0]) < 1e-9);
+  const zenith = E.sunVectorFromAngles(90, 90);
+  assert.ok(zenith[2] > 0.999);
+});
+
+test('stereographicProject puts the zenith at the origin and horizon on the rim', () => {
+  const zen = E.stereographicProject(0, 90, 50);
+  assert.ok(Math.abs(zen.x) < 1e-9 && Math.abs(zen.y) < 1e-9);
+  const horiz = E.stereographicProject(0, 0, 50);
+  assert.ok(Math.abs(Math.hypot(horiz.x, horiz.y) - 50) < 1e-6);
+});
+
+test('hexToRgb expands shorthand and rejects malformed colours', () => {
+  assert.deepEqual(E.hexToRgb('#369'), [51, 102, 153]);
+  assert.throws(() => E.hexToRgb('#zz0000'));
+  assert.throws(() => E.hexToRgb('12'));
+});
+
+test('shadeHex darkens below 1 and lightens above 1 without overflow', () => {
+  const dark = E.shadeHex('#336699', 0.5);
+  const light = E.shadeHex('#336699', 1.2);
+  assert.ok(dark.length >= 4 && light.length >= 4);
+  assert.ok(!/NaN/.test(E.shadeHex('#ffffff', 2)));
+});
+
+test('polygonArea is positive for counter-clockwise and negative for clockwise', () => {
+  const sq = [[0, 0], [4, 0], [4, 4], [0, 4]];
+  assert.ok(E.polygonArea(sq) > 0);
+  assert.ok(E.polygonArea([...sq].reverse()) < 0);
+});
+
+test('clockToSolarHour identity at longitude matching the time zone meridian', () => {
+  const h = E.clockToSolarHour(12, 15 * -6, -6, 80);
+  assert.ok(Math.abs(h - 12 - E.computeEquationOfTime(80, 12) / 60) < 1e-9);
+});
+
+test('computeDaylightHours reports midnight sun and polar night at latitude 80', () => {
+  assert.ok(E.computeDaylightHours(80, 172) > 23.5);
+  assert.ok(E.computeDaylightHours(-80, 172) < 0.5);
+  assert.ok(E.computeDaylightHours(0, 200) > 11.5 && E.computeDaylightHours(0, 200) < 12.5);
+});
+
+test('computeOptimalTiltGain stays finite through a polar night', () => {
+  const g = E.computeOptimalTiltGain({ latitude: -80, dayOfYear: 172 });
+  assert.ok(Number.isFinite(g.trackerEnergy));
+  assert.ok(g.daylightHours < 0.5);
+  assert.ok(Number.isFinite(g.gainVsHorizontal) && Number.isFinite(g.gainVsFixedTilt));
+});
+
+test('computeSunPath rejects degenerate step sizes', () => {
+  assert.throws(() => E.computeSunPath({ latitude: 30, dayOfYear: 80, stepMinutes: 0 }), RangeError);
+  assert.throws(() => E.computeSunPath({ latitude: 30, dayOfYear: 80, stepMinutes: 500 }), RangeError);
+});
+
+test('computeGimbalPose step counts stay non-negative inside the travel window', () => {
+  const pose = E.computeGimbalPose({ azimuthDeg: 200, elevationDeg: 45 }, E.normalizeParams({}));
+  assert.ok(pose.azimuthSteps >= 0);
+  assert.ok(pose.elevationSteps >= 0);
+  assert.equal(pose.limited, false);
+  assert.ok(pose.cosIncidence > 0.9999);
+});
+
+test('panelNormal at zero elevation is horizontal and at 90 is vertical', () => {
+  const flat = E.panelNormal(180, 0);
+  assert.ok(Math.abs(flat[2]) < 1e-9);
+  const up = E.panelNormal(0, 90);
+  assert.ok(Math.abs(up[2] - 1) < 1e-9);
+});
+
+test('computeSolarPosition is below the horizon at local midnight', () => {
+  const pos = E.computeSolarPosition({ latitude: 40, dayOfYear: 172, solarHour: 0 });
+  assert.ok(pos.elevationDeg < 0);
+});
+
+test('computeSolarPosition noon azimuth is due south in the northern hemisphere', () => {
+  const pos = E.computeSolarPosition({ latitude: 40, dayOfYear: 80, solarHour: 12 });
+  assert.ok(Math.abs(pos.azimuthDeg - 180) < 2);
+});
+
+test('EXPLODE_SPACING_MM and ISO_CAMERA expose sane defaults', () => {
+  assert.ok(E.EXPLODE_SPACING_MM > 0);
+  assert.ok(Number.isFinite(E.ISO_CAMERA.yaw) && Number.isFinite(E.ISO_CAMERA.pitch));
+  assert.ok(E.ISO_CAMERA.zoom > 0);
+});

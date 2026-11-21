@@ -39,7 +39,6 @@
 
 html {
   font-size: 15px;
-  scroll-behavior: smooth;
   background-color: var(--bg-vellum);
   color: var(--ink-primary);
 }
@@ -147,12 +146,6 @@ th,
   border-radius: var(--radius-sm);
   background: var(--accent-orange);
   color: #FFFFFF;
-}
-
-.brand-subtitle {
-  margin: 2px 0 0;
-  font-size: 0.82rem;
-  color: var(--ink-secondary);
 }
 
 .header-actions {
@@ -903,9 +896,16 @@ input[type="range"]:focus-visible {
 
 .stack-node:focus-visible,
 .search-input:focus-visible,
-#cad-viewport:focus-visible {
+#cad-viewport:focus-visible,
+.sun-hour-tick:focus-visible,
+.pcb-fp:focus-visible {
   outline: 2px solid var(--accent-orange);
   outline-offset: 2px;
+}
+
+.sun-hour-tick:focus-visible,
+.pcb-fp:focus-visible {
+  filter: drop-shadow(0 0 1.6px var(--accent-orange));
 }
 
 #cad-viewport {

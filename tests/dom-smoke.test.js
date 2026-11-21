@@ -580,3 +580,183 @@ test('Copy .SCAD reports a refused clipboard write instead of throwing or claimi
     restore();
   }
 });
+
+/* --------------------------- 5. Keyboard & WCAG contracts ----------------- */
+
+test('sunpath hour ticks are keyboard-focusable buttons with labels', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  App.initWorkbench(doc, E, HW);
+  const markup = elementsById['sunpath-svg'].innerHTML;
+  const ticks = markup.match(/class="sun-hour-tick"/g) || [];
+  assert.ok(ticks.length > 0);
+  const groups = markup.split('<g class="sun-hour-tick"').slice(1);
+  for (const g of groups) {
+    const head = g.slice(0, g.indexOf('>'));
+    assert.ok(head.includes('tabindex="0"'), 'hour tick missing tabindex');
+    assert.ok(head.includes('role="button"'), 'hour tick missing role');
+    assert.ok(head.includes('aria-label="Set solar hour'), 'hour tick missing aria-label');
+  }
+});
+
+test('Enter and Space on a sunpath tick set the solar hour', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  const tick = { getAttribute: (n) => (n === 'data-hour' ? '14' : null) };
+  elementsById['sunpath-svg'].dispatchEvent('keydown', { key: 'Enter', target: tick });
+  assert.equal(wb.state.solarHour, 14);
+  const tick2 = { getAttribute: (n) => (n === 'data-hour' ? '9' : null) };
+  elementsById['sunpath-svg'].dispatchEvent('keydown', { key: ' ', target: tick2 });
+  assert.equal(wb.state.solarHour, 9);
+  const tick3 = { getAttribute: (n) => (n === 'data-hour' ? '7' : null) };
+  elementsById['sunpath-svg'].dispatchEvent('keydown', { key: 'x', target: tick3 });
+  assert.equal(wb.state.solarHour, 9, 'non-activation keys must not fire');
+});
+
+test('PCB footprints are keyboard-focusable buttons and Enter selects them', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  const markup = elementsById['pcb-svg'].innerHTML;
+  const groups = markup.split('<g class="pcb-fp"').slice(1);
+  assert.ok(groups.length >= 40);
+  for (const g of groups) {
+    const head = g.slice(0, g.indexOf('>'));
+    assert.ok(head.includes('tabindex="0"'), 'footprint missing tabindex');
+    assert.ok(head.includes('role="button"'), 'footprint missing role');
+    assert.ok(head.includes('aria-label="Select component'), 'footprint missing aria-label');
+  }
+  const fp = { getAttribute: (n) => (n === 'data-ref' ? 'U2' : null) };
+  elementsById['pcb-svg'].dispatchEvent('keydown', { key: 'Enter', target: fp });
+  assert.equal(wb.state.selectedPcbRef, 'U2');
+});
+
+test('canvas arrow keys orbit the camera and plus/minus keys zoom', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  const canvas = elementsById['cad-viewport'];
+  const yaw0 = wb.state.camera.yaw;
+  canvas.dispatchEvent('keydown', { key: 'ArrowLeft' });
+  assert.equal(wb.state.camera.yaw, (yaw0 + 6) % 360);
+  canvas.dispatchEvent('keydown', { key: 'ArrowRight' });
+  assert.equal(wb.state.camera.yaw, yaw0);
+  const pitch0 = wb.state.camera.pitch;
+  canvas.dispatchEvent('keydown', { key: 'ArrowUp' });
+  assert.equal(wb.state.camera.pitch, Math.max(-85, Math.min(85, pitch0 - 4)));
+  const zoom0 = wb.state.camera.zoom;
+  canvas.dispatchEvent('keydown', { key: '+' });
+  assert.ok(wb.state.camera.zoom > zoom0);
+  canvas.dispatchEvent('keydown', { key: '-' });
+  assert.ok(wb.state.camera.zoom < zoom0 * 1.08, 'minus key zooms back out');
+  canvas.dispatchEvent('keydown', { key: 'x' });
+  const zoomX = wb.state.camera.zoom;
+  canvas.dispatchEvent('keydown', { key: 'x' });
+  assert.equal(wb.state.camera.zoom, zoomX, 'unbound keys ignored');
+});
+
+test('hud-manifold-detail reports live validator counts and status', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  App.initWorkbench(doc, E, HW);
+  const text = elementsById['hud-manifold-detail'].textContent;
+  assert.match(text, /^V=\d+ E=\d+ F=\d+ \(6\/6 Closed Manifold\)$/);
+});
+
+test('hud-manifold-detail has a real failure branch in source, not a hardcoded claim', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+  assert.ok(src.includes('manifold check failed'), 'no failure branch for the HUD manifold line');
+  assert.ok(src.includes('mf.allWatertight ?'), 'HUD text must derive from the validator result');
+});
+
+test('index.html declares a restrictive Content-Security-Policy meta', () => {
+  const m = htmlSource.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/);
+  assert.ok(m, 'CSP meta missing');
+  const csp = m[1];
+  for (const d of ["default-src 'self'", "script-src 'self'", "object-src 'none'", "base-uri 'none'"]) {
+    assert.ok(csp.includes(d), 'CSP missing directive ' + d);
+  }
+});
+
+test('index.html has no inline event handlers or javascript: URLs', () => {
+  assert.equal(/\son(click|input|change|keydown|keyup|load|error|submit)=/i.test(htmlSource), false);
+  assert.equal(/javascript:/i.test(htmlSource), false);
+});
+
+test('canvas, skip link and focus-visible styles satisfy WCAG 2.4.7 and 2.1.1', () => {
+  assert.ok(/<canvas[^>]+tabindex="0"/.test(htmlSource), 'canvas must be focusable');
+  assert.ok(htmlSource.includes('aria-label="Interactive 3D CAD viewport'));
+  assert.ok(htmlSource.includes('class="skip-link"'));
+  assert.ok(htmlSource.includes('id="main-workbench"'), 'skip-link target must exist');
+  assert.ok(cssSource.includes(':focus-visible'), 'focus-visible rules required');
+  assert.ok(cssSource.includes('.sun-hour-tick:focus-visible'), 'tick focus style required');
+  assert.ok(cssSource.includes('.pcb-fp:focus-visible'), 'footprint focus style required');
+});
+
+test('single-character canvas keys are only bound to the focused canvas (WCAG 2.1.4)', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+  assert.equal(/window\.addEventListener\('keydown'/.test(src), false, 'global keydown would violate 2.1.4');
+  assert.equal(/document\.addEventListener\('keydown'/.test(src), false, 'global keydown would violate 2.1.4');
+});
+
+test('no scroll-behavior smooth anywhere in shipped styles or markup', () => {
+  for (const rel of ['styles.css', 'index.html']) {
+    const text = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    assert.equal(/scroll-behavior\s*:\s*smooth/.test(text), false, rel + ' has smooth scroll');
+  }
+});
+
+test('titles stand alone: no eyebrow above, no tagline below', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.equal(/class="[^"]*(subtitle|tagline|kicker|eyebrow|lede|deck)[^"]*"/i.test(html), false,
+    'found subtitle/tagline/kicker markup under a title');
+  const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
+  assert.equal(/\.(subtitle|tagline|kicker|eyebrow|lede|deck)\b/i.test(css), false,
+    'found subtitle/tagline styles in stylesheet');
+});
+
+test('every shipped text file is free of em/en dashes and AI-tool mentions', () => {
+  const exts = new Set(['.html', '.css', '.js', '.md', '.csv', '.txt', '.scad', '.kicad_sch', '.kicad_pcb', '.kicad_pro']);
+  const aiRe = /\b(claude|openai|anthropic|chatgpt|copilot|codeium|tabnine|deepseek|mistral|llama|gemini|devin|windsurf)\b|generated by (an? )?(ai|llm|model)|ai-generated/i;
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === 'node_modules' || entry.name === '.git' || entry.name.startsWith('.')) continue;
+      const p = path.join(dir, entry.name);
+      if (entry.isDirectory()) { walk(p); continue; }
+      if (!exts.has(path.extname(entry.name).toLowerCase())) continue;
+      const text = fs.readFileSync(p, 'utf8');
+      const rel = path.relative(ROOT, p);
+      assert.equal(/[\u2013\u2014]/.test(text), false, rel + ' has a forbidden dash');
+      // The scanner file necessarily contains the term list itself.
+      if (rel !== path.join('tests', 'dom-smoke.test.js')) {
+        assert.equal(aiRe.test(text), false, rel + ' mentions an AI tool');
+      }
+    }
+  };
+  walk(ROOT);
+});
+
+test('sunpath hour tick count matches elevated daylight samples', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  App.initWorkbench(doc, E, HW);
+  const markup = elementsById['sunpath-svg'].innerHTML;
+  const ticks = markup.match(/class="sun-hour-tick"/g) || [];
+  let expected = 0;
+  for (let h = 5; h <= 19; h += 1) {
+    if (E.computeSolarPosition({ latitude: 38.9, dayOfYear: 172, solarHour: h }).elevationDeg > 0) expected += 1;
+  }
+  assert.equal(ticks.length, expected);
+});
+
+test('pcb footprint count matches the number of placed components', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  App.initWorkbench(doc, E, HW);
+  const fps = (elementsById['pcb-svg'].innerHTML.match(/class="pcb-fp"/g) || []).length;
+  assert.equal(fps, Object.keys(HW.PLACEMENT).length);
+});
+
+test('banner and telemetry readouts are populated with finite formatted values', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  App.initWorkbench(doc, E, HW);
+  assert.match(elementsById['banner-gain'].textContent, /^\+\d+\.\d% vs fixed tilt$/);
+  assert.match(elementsById['sky-daylight-hours'].textContent, /^\d+\.\d{2} h daylight$/);
+  assert.match(elementsById['viewport-pose-readout'].textContent, /^Az \d+\.\d deg \/ El \d+\.\d deg$/);
+  assert.match(elementsById['met-bounds'].textContent, /^\d+\.\d x \d+\.\d x \d+\.\d mm$/);
+  assert.match(elementsById['energy-val-tracker'].textContent, /^\d+\.\d{2} kWh\/m2$/);
+});

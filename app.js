@@ -466,7 +466,7 @@
         var hPos = E.computeSolarPosition({ latitude: state.latitude, dayOfYear: state.dayOfYear, solarHour: h });
         if (hPos.elevationDeg > 0) {
           var hp = E.stereographicProject(hPos.azimuthDeg, hPos.elevationDeg, R);
-          parts.push('<g class="sun-hour-tick" data-hour="' + h + '" style="cursor:pointer;">');
+          parts.push('<g class="sun-hour-tick" data-hour="' + h + '" style="cursor:pointer;" tabindex="0" role="button" aria-label="Set solar hour to ' + h + ':00">');
           parts.push('<title>' + h + ':00 solar time, azimuth ' + hPos.azimuthDeg.toFixed(0) + '°, elevation ' + hPos.elevationDeg.toFixed(0) + '°</title>');
           parts.push('<circle cx="' + hp.x.toFixed(2) + '" cy="' + hp.y.toFixed(2) + '" r="3.4" fill="#F5F3EC" stroke="#D95326" stroke-width="1.3"/>');
           if (h % 2 === 0) {
@@ -540,7 +540,7 @@
         var stroke = selected ? '#D95326' : '#F5F3EC';
         var sw = selected ? '0.65' : '0.28';
 
-        out.push('<g class="pcb-fp" data-ref="' + comp.ref + '" style="cursor:pointer;">');
+        out.push('<g class="pcb-fp" data-ref="' + comp.ref + '" style="cursor:pointer;" tabindex="0" role="button" aria-label="Select component ' + comp.ref + '">');
         out.push('<rect x="' + (x - w / 2).toFixed(2) + '" y="' + (y - h / 2).toFixed(2) + '" width="' + w.toFixed(2) + '" height="' + h.toFixed(2) +
           '" rx="0.4" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '"/>');
         out.push('<text x="' + x.toFixed(2) + '" y="' + (y + 0.55).toFixed(2) + '" text-anchor="middle" fill="#F5F3EC" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="' +
@@ -702,7 +702,8 @@
       setText('viewport-pose-readout', 'Az ' + pose.azimuthDeg.toFixed(1) + ' deg / El ' + pose.elevationDeg.toFixed(1) + ' deg');
       setText('hud-dimensions', 'Pitch Dia: ' + train.wheel.pitchDiameter.toFixed(2) + ' mm | OD: ' + train.wheel.outsideDiameter.toFixed(2) + ' mm | Bore: ' + (layout.wheel.boreRadius * 2).toFixed(2) + ' mm');
       setText('hud-camera', 'Yaw ' + Math.round(state.camera.yaw) + ' deg / Pitch ' + Math.round(state.camera.pitch) + ' deg / Zoom ' + state.camera.zoom.toFixed(2) + 'x');
-      setText('hud-manifold-detail', 'V=' + mf.totalV + ' E=' + mf.totalE + ' F=' + mf.totalF + ' (6/6 Closed Manifold)');
+      setText('hud-manifold-detail', 'V=' + mf.totalV + ' E=' + mf.totalE + ' F=' + mf.totalF +
+        (mf.allWatertight ? ' (6/6 Closed Manifold)' : ' (manifold check failed)'));
 
       setText('met-pitch-od', train.wheel.pitchDiameter.toFixed(2) + ' / ' + train.wheel.outsideDiameter.toFixed(2) + ' mm');
       setText('met-root-backlash', 'Root ' + train.wheel.rootDiameter.toFixed(2) + ' mm | Backlash ' + train.backlash.toFixed(3) + ' mm');
@@ -988,40 +989,65 @@
         });
       }
 
-      // Click on sunpath hour tick
+      // Click or keyboard-activate a sunpath hour tick
+      function selectSunHour(h) {
+        if (!isNaN(h)) {
+          state.solarHour = h;
+          syncSlidersFromState();
+          updateAll();
+        }
+      }
       var sunSvg = doc.getElementById('sunpath-svg');
       if (sunSvg) {
         sunSvg.addEventListener('click', function (ev) {
           var target = ev.target;
           while (target && target !== sunSvg) {
             if (target.getAttribute && target.getAttribute('data-hour')) {
-              var h = parseFloat(target.getAttribute('data-hour'));
-              if (!isNaN(h)) {
-                state.solarHour = h;
-                syncSlidersFromState();
-                updateAll();
-              }
+              selectSunHour(parseFloat(target.getAttribute('data-hour')));
               return;
             }
             target = target.parentNode;
           }
         });
+        sunSvg.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') {
+            return;
+          }
+          var target = ev.target;
+          if (target.getAttribute && target.getAttribute('data-hour')) {
+            ev.preventDefault();
+            selectSunHour(parseFloat(target.getAttribute('data-hour')));
+          }
+        });
       }
 
-      // Click on PCB footprint
+      // Click or keyboard-activate a PCB footprint
+      function selectPcbRef(ref) {
+        state.selectedPcbRef = ref;
+        renderPcbSvg();
+        updateSelectedPcbCard();
+        renderBomAndPinoutTables();
+      }
       var pcbSvg = doc.getElementById('pcb-svg');
       if (pcbSvg) {
         pcbSvg.addEventListener('click', function (ev) {
           var target = ev.target;
           while (target && target !== pcbSvg) {
             if (target.getAttribute && target.getAttribute('data-ref')) {
-              state.selectedPcbRef = target.getAttribute('data-ref');
-              renderPcbSvg();
-              updateSelectedPcbCard();
-              renderBomAndPinoutTables();
+              selectPcbRef(target.getAttribute('data-ref'));
               return;
             }
             target = target.parentNode;
+          }
+        });
+        pcbSvg.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') {
+            return;
+          }
+          var target = ev.target;
+          if (target.getAttribute && target.getAttribute('data-ref')) {
+            ev.preventDefault();
+            selectPcbRef(target.getAttribute('data-ref'));
           }
         });
       }
