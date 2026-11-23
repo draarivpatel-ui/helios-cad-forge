@@ -760,3 +760,219 @@ test('banner and telemetry readouts are populated with finite formatted values',
   assert.match(elementsById['met-bounds'].textContent, /^\d+\.\d x \d+\.\d x \d+\.\d mm$/);
   assert.match(elementsById['energy-val-tracker'].textContent, /^\d+\.\d{2} kWh\/m2$/);
 });
+
+/* --------------------------------------------------- 5. Lab section DOM */
+
+const L = require('../helios-lab.js');
+
+test('index.html ships the lab section hidden with every required id', () => {
+  const required = [
+    'lab-section', 'lab-title', 'lab-digest-badge', 'lab-lat-out', 'lab-latitude',
+    'lab-yield-tbody', 'lab-bench-tbody', 'lab-yield-note', 'lab-month-readout',
+    'lab-yield-svg', 'lab-yield-legend', 'lab-worm-readout', 'lab-material',
+    'lab-custom-mu-group', 'lab-mu', 'lab-mu-out', 'lab-worm-svg', 'lab-worm-legend',
+    'lab-audit-tally', 'lab-audit-grid', 'lab-digest', 'lab-verify-out',
+    'lab-export-json', 'lab-export-csv', 'lab-export-md', 'lab-copy-link',
+    'lab-verify', 'lab-tamper', 'lab-test-tally', 'lab-run-tests', 'lab-test-list'
+  ];
+  required.forEach((id) => {
+    assert.ok(htmlSource.includes(`id="${id}"`), `missing #${id}`);
+  });
+  assert.ok(/id="lab-section"[^>]*\shidden/.test(htmlSource), 'lab section must start hidden');
+});
+
+test('helios-lab.js loads before app.js in the script order', () => {
+  const iLab = htmlSource.indexOf('src="helios-lab.js"');
+  const iApp = htmlSource.indexOf('src="app.js"');
+  const iEng = htmlSource.indexOf('src="engine.js"');
+  assert.ok(iEng >= 0 && iLab > iEng && iApp > iLab, 'script order must be engine, hardware, lab, app');
+});
+
+test('lab section contains no external urls, images, fonts or scripts', () => {
+  const start = htmlSource.indexOf('id="lab-section"');
+  const end = htmlSource.indexOf('</main>', start);
+  const seg = htmlSource.slice(start, end);
+  assert.equal(/(https?:)?\/\//.test(seg), false, 'external url in lab markup');
+  assert.equal(/<img|<link|@import/.test(seg), false, 'external asset in lab markup');
+});
+
+test('initLab returns null gracefully without a lab section or module', () => {
+  const { doc } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  assert.equal(App.initLab(null, E, HW, L, wb), null);
+  assert.equal(App.initLab(doc, E, HW, null, wb), null);
+  const emptyDoc = { getElementById: () => null };
+  assert.equal(App.initLab(emptyDoc, E, HW, L, wb), null);
+});
+
+test('initLab renders comparator, benchmark, audit and digest on first paint', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  const lab = App.initLab(doc, E, HW, L, wb);
+  assert.ok(lab);
+  const tbody = elementsById['lab-yield-tbody'].innerHTML;
+  L.REGIME_IDS.forEach((id) => {
+    assert.ok(tbody.includes(`data-regime="${id}"`), `missing row ${id}`);
+  });
+  assert.equal((tbody.match(/<tr /g) || []).length, 5);
+  assert.equal((elementsById['lab-bench-tbody'].innerHTML.match(/<tr>/g) || []).length, 4);
+  assert.equal((elementsById['lab-audit-grid'].innerHTML.match(/lab-audit-cell/g) || []).length, 7);
+  assert.match(elementsById['lab-digest'].textContent, /^sha256: [0-9a-f]{64}$/);
+  assert.match(elementsById['lab-digest-badge'].textContent, /^sha256: [0-9a-f]{18}\.\.\.$/);
+});
+
+test('lab yield svg draws five regime curves and twelve month ticks', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  App.initLab(doc, E, HW, L, wb);
+  const svg = elementsById['lab-yield-svg'].innerHTML;
+  assert.equal((svg.match(/<path /g) || []).length, 5);
+  assert.equal((svg.match(/data-month="/g) || []).length, 12);
+  ['#D95326', '#235789', '#656B70', '#B87D14', '#1B6B53'].forEach((c) => {
+    assert.ok(svg.includes(c), `missing curve color ${c}`);
+  });
+});
+
+test('lab worm svg draws friction curve, lead line, boundary and material ticks', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  App.initLab(doc, E, HW, L, wb);
+  const svg = elementsById['lab-worm-svg'].innerHTML;
+  assert.ok(svg.includes('stroke="#1B6B53"'), 'phi curve missing');
+  assert.ok(svg.includes('stroke="#235789"'), 'lambda line missing');
+  assert.equal((svg.match(/data-material="/g) || []).length, 5);
+  assert.ok(svg.includes('mu*='), 'boundary label missing');
+  L.MATERIAL_IDS.forEach((id) => {
+    assert.ok(svg.includes(`data-material="${id}"`), `missing marker ${id}`);
+  });
+});
+
+test('lab state methods drive the same code path as delegated clicks', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  const lab = App.initLab(doc, E, HW, L, wb);
+  lab.selectRegime('single-axis-ns');
+  assert.equal(lab.state.regime, 'single-axis-ns');
+  assert.ok(elementsById['lab-yield-tbody'].innerHTML.includes('data-regime="single-axis-ns" class="is-highlighted"'));
+  lab.selectRegime('not-a-regime');
+  assert.equal(lab.state.regime, 'single-axis-ns', 'invalid regime ignored');
+  lab.selectMonth(5);
+  assert.match(elementsById['lab-month-readout'].textContent, /^Jun day 162/);
+  lab.selectMonth(5);
+  assert.equal(elementsById['lab-month-readout'].textContent, 'all 12 Klein days');
+  lab.setMaterial('hardened-steel');
+  assert.match(elementsById['lab-worm-readout'].textContent, /back-drivable/);
+  lab.setMaterial('unobtanium');
+  assert.equal(lab.state.material, 'hardened-steel');
+});
+
+test('custom material reveals the mu slider and updates the brief state', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  const lab = App.initLab(doc, E, HW, L, wb);
+  assert.equal(elementsById['lab-custom-mu-group'].classList.contains('hidden'), true);
+  lab.setMaterial('custom');
+  lab.setCustomMu(0.33);
+  assert.equal(elementsById['lab-custom-mu-group'].classList.contains('hidden'), false);
+  assert.equal(elementsById['lab-mu-out'].textContent, 'mu = 0.33');
+  const hs = lab.currentHashState();
+  assert.equal(hs.mat, 'custom');
+  assert.equal(hs.mu, 0.33);
+  lab.setCustomMu(9);
+  assert.equal(lab.state.customMu, 0.4, 'mu clamps to sweep max');
+});
+
+test('verify, tamper and self-test runner report through lab-verify-out and tally', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  const lab = App.initLab(doc, E, HW, L, wb);
+  const v = lab.verifyDigest();
+  assert.equal(v.ok, true);
+  assert.equal(elementsById['lab-verify-out'].classList.contains('ok'), true);
+  const t = lab.tamperDemo();
+  assert.equal(t.ok, false);
+  assert.equal(elementsById['lab-verify-out'].classList.contains('bad'), true);
+  const res = lab.runSelfTests();
+  assert.equal(res.passed, res.total);
+  assert.equal(res.total, 18);
+  assert.equal(elementsById['lab-test-tally'].textContent, '18/18 passing');
+  const items = elementsById['lab-test-list'].innerHTML.match(/<li>/g) || [];
+  assert.equal(items.length, 18);
+  assert.equal((elementsById['lab-test-list'].innerHTML.match(/st-fail/g) || []).length, 0);
+});
+
+test('lab digest is identical across display, badge and all three exporters', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  const lab = App.initLab(doc, E, HW, L, wb);
+  const shown = /^sha256: ([0-9a-f]{64})$/.exec(elementsById['lab-digest'].textContent)[1];
+  const stamped = lab.stamped();
+  assert.equal(stamped.digest, shown);
+  assert.ok(elementsById['lab-digest-badge'].textContent.includes(shown.slice(0, 18)));
+  assert.ok(L.briefToJson(stamped).includes(shown));
+  assert.ok(L.briefToCsv(stamped).includes(shown));
+  assert.ok(L.briefToMarkdown(stamped).includes(shown));
+});
+
+test('applyHash restores every encoded field into workbench and lab state', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  const lab = App.initLab(doc, E, HW, L, wb);
+  const hash = L.encodeHashState({ lat: -45.5, day: 355, reg: 'single-axis-ew', mat: 'custom', mu: 0.4, teeth: 30, mod: 2.0 });
+  const ok = lab.applyHash('#' + hash);
+  assert.equal(ok, true);
+  assert.equal(wb.state.latitude, -45.5);
+  assert.equal(wb.state.dayOfYear, 355);
+  assert.equal(wb.state.teeth, 30);
+  assert.equal(wb.state.module, 2.0);
+  assert.equal(lab.state.regime, 'single-axis-ew');
+  assert.equal(lab.state.material, 'custom');
+  assert.equal(lab.state.customMu, 0.4);
+  assert.equal(elementsById['slider-latitude'].value, '-45.5');
+  assert.equal(elementsById['slider-day'].value, '355');
+  assert.equal(elementsById['slider-teeth'].value, '30');
+  assert.equal(elementsById['slider-module'].value, '2');
+  assert.equal(elementsById['lab-latitude'].value, 'workbench');
+  assert.equal(elementsById['lab-material'].value, 'custom');
+  assert.equal(elementsById['lab-mu'].value, '0.4');
+});
+
+test('applyHash fails closed on malformed, hostile or out-of-range payloads', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  const lab = App.initLab(doc, E, HW, L, wb);
+  const before = wb.state.latitude;
+  ['#hc=', '#hc=AAAA', '#hc=****', '#xx=QQ', '#hc=' + L.b64urlEncode('{bad'),
+   '#hc=' + L.b64urlEncode('{"lat":200}'),
+   '#hc=' + L.b64urlEncode('{"__proto__":{"x":1}}')].forEach((h, i) => {
+    assert.equal(lab.applyHash(h), false, `hash ${i}`);
+  });
+  assert.equal(wb.state.latitude, before, 'state untouched by hostile hashes');
+  assert.equal(lab.applyHash(''), false);
+  assert.equal(lab.applyHash('#'), false);
+  assert.equal(lab.applyHash(null), false);
+});
+
+test('workbench updates propagate into the lab through the refresh listener', () => {
+  const { doc, elementsById } = createWorkbenchDom();
+  const wb = App.initWorkbench(doc, E, HW);
+  const lab = App.initLab(doc, E, HW, L, wb);
+  const d1 = lab.stamped().digest;
+  wb.state.teeth = 28;
+  wb.state.module = 2.0;
+  wb.updateAll();
+  const d2 = lab.stamped().digest;
+  assert.notEqual(d1, d2, 'digest must change when gear state changes');
+  const hs = lab.currentHashState();
+  assert.equal(hs.teeth, 28);
+  assert.equal(hs.mod, 2);
+  assert.match(elementsById['lab-worm-readout'].textContent, /lambda \d+\.\d{2} deg/);
+});
+
+test('lab CSS carries no external fonts, images or smooth scrolling', () => {
+  const labCss = cssSource.slice(cssSource.indexOf('Lab section'));
+  assert.ok(labCss.length > 100, 'lab css block missing');
+  assert.equal(/(https?:)?\/\//.test(labCss), false);
+  assert.equal(/scroll-behavior/.test(labCss), false);
+  assert.equal(/@font-face|url\(/.test(labCss), false);
+});

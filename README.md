@@ -4,7 +4,7 @@
 
 **Reference Design Note.** This repository provides a complete parametric CAD, KiCad schematic/PCB, BOM, and browser simulator reference design for a dual-axis solar tracker. Physical boards have not yet been fabricated or assembled.
 
-Helios-6 is a parametric dual-axis solar tracker gimbal, OpenSCAD + watertight STL mesh generator, Spencer (1971) solar ephemeris calculator, and KiCad 8 RP2040 + INA219 telemetry node. The project pairs committed mechanical and electrical hardware artifacts (`cad/`, `pcb/`, `bom/`) with a zero-dependency in-browser CAD and EDA studio (`index.html`, `styles.css`, `engine.js`, `hardware.js`, `app.js`).
+Helios-6 is a parametric dual-axis solar tracker gimbal, OpenSCAD + watertight STL mesh generator, Spencer (1971) solar ephemeris calculator, and KiCad 8 RP2040 + INA219 telemetry node. The project pairs committed mechanical and electrical hardware artifacts (`cad/`, `pcb/`, `bom/`) with a zero-dependency in-browser CAD and EDA studio (`index.html`, `styles.css`, `engine.js`, `hardware.js`, `helios-lab.js`, `app.js`).
 
 ## Repository Architecture
 
@@ -14,6 +14,7 @@ helios-cad-forge/
 ├── styles.css                    # Drafting vellum (#F5F3EC) and anodized panel (#EAE6DA) stylesheet
 ├── engine.js                     # UMD solar position, worm-gear kinematics, watertight STL & OpenSCAD engine
 ├── hardware.js                   # UMD LCSC bill of materials, RP2040 + INA219 netlist & 80x56 mm PCB placement
+├── helios-lab.js                 # UMD 5-regime yield comparator, worm self-locking sweep, SHA-256 brief & #hc= codec
 ├── app.js                        # Interactive 3D canvas viewport, stereographic sun-path & PCB inspector
 ├── cad/
 │   ├── helios_gimbal.scad        # Parametric OpenSCAD source for the 6-body gimbal assembly
@@ -34,7 +35,8 @@ helios-cad-forge/
 │   └── verify-scad.mjs           # OpenSCAD WebAssembly volume and bounding-box parity verifier
 └── tests/
     ├── engine.test.js            # Unit tests for solar math, gear kinematics, manifold topology & KiCad files
-    └── dom-smoke.test.js         # DOM smoke tests for the interactive 3D workbench & anti-slop hygiene
+    ├── helios-lab.test.js        # Lab tests: SHA-256 vectors, codec fuzzing, yield parity, exports & audits
+    └── dom-smoke.test.js         # DOM smoke tests for the interactive 3D workbench, lab UI & anti-slop hygiene
 ```
 
 ## Core Engineering Capabilities
@@ -56,12 +58,19 @@ helios-cad-forge/
 * Every pin of all 48 placed components is verified against official KiCad 8 symbol definitions and either assigned to one of 40 named nets or explicitly documented in `NO_CONNECT`.
 * All 48 footprint courtyards are placed on an 80 x 56 mm 2-layer board and verified by automated tests to lie strictly inside `Edge.Cuts` with zero courtyard overlaps.
 
+### 4. Solar Yield & Kinematics Lab (`helios-lab.js`)
+* Compares 5 tracking regimes (`horizontal`, `fixed-lat-tilt`, `single-axis-ew`, `single-axis-ns`, `dual-axis-helios`) across 12 Klein representative days, verified against full 365-day integration, with benchmark rows at 0 / 29.6 / 40.7 / 55.7 deg latitude plus the live workbench latitude.
+* Sweeps the worm self-locking boundary `phi_s(mu) = arctan(mu / cos alpha)` over 5 material pairs plus a custom `mu` in `[0.05, 0.40]`, reporting the strict `lambda < phi_s` verdict, locking margin, and static holding efficiency.
+* Re-runs the live Euler-Poincare audit on all 6 gimbal bodies and the 48-part PCB check, then stamps a pure-JS FIPS 180-4 SHA-256 digest into JSON, formula-safe CSV, and Markdown engineering briefs so one tamper-evident fingerprint appears identically on the page and in every export.
+* Round-trips latitude, day-of-year, tracking regime, worm material/`mu`, and gear teeth/module through a fail-closed `#hc=` bookmark hash that rejects malformed payloads and prototype-pollution keys.
+* Includes an in-page deterministic self-test runner (18 checks: SHA-256 known-answer vectors, declination landmarks, ordering invariants, worm boundary exactness, manifold chi, CSV escaping, tamper detection, and codec round-trip).
+
 ## Verification & Local Commands
 
 Requires Node.js 18+ (zero `npm` runtime dependencies):
 
 ```bash
-# Run the 70-test unit and DOM smoke suite
+# Run the 439-test unit, lab, and DOM smoke suite
 npm test
 
 # Deterministically regenerate all STL, OpenSCAD, KiCad 8, and BOM artifacts

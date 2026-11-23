@@ -104,6 +104,17 @@
     }, 500);
   }
 
+  /* Lab refresh hooks fired at the end of every workbench updateAll(). */
+  var labRefreshListeners = [];
+
+  function setHidden(el, hide) {
+    if (!el) {
+      return;
+    }
+    el.hidden = hide;
+    el.classList.toggle('hidden', hide);
+  }
+
   function initWorkbench(doc, E, HW) {
     if (!doc || !E || !HW) {
       return null;
@@ -760,6 +771,12 @@
 
       renderCadViewport(sun, pose, layout, train);
       renderSunPathSvg(sun, pose);
+
+      for (var li = 0; li < labRefreshListeners.length; li++) {
+        try {
+          labRefreshListeners[li]();
+        } catch (e) { /* a lab refresh fault must never break the workbench */ }
+      }
     }
 
     function syncSlidersFromState() {
@@ -1149,19 +1166,696 @@
     return {
       state: state,
       updateAll: updateAll,
+      syncSlidersFromState: syncSlidersFromState,
       renderBomAndPinoutTables: renderBomAndPinoutTables,
       dayOfYearToLabel: dayOfYearToLabel,
       solarHourToClockLabel: solarHourToClockLabel
     };
   }
 
+  /* --------------------------------------------------------- Lab section */
+
+  /**
+   * Wire the Solar Yield & Kinematics Lab. Returns null when the lab module
+   * or the section markup is absent, in which case the page keeps the section
+   * hidden and everything else works unchanged.
+   */
+  function initLab(doc, E, HW, L, wb) {
+    if (!doc || !E || !HW || !L || !wb) {
+      return null;
+    }
+    var section = doc.getElementById('lab-section');
+    if (!section) {
+      return null;
+    }
+
+    var lab = {
+      latitudeOption: 'workbench',
+      material: 'bronze-steel',
+      customMu: 0.15,
+      regime: 'dual-axis-helios',
+      month: -1,
+      testResults: null
+    };
+    var briefCache = L.createBriefCache();
+    var lastStamped = null;
+    var lastHash = null;
+
+    var YIELD_COLORS = {
+      'horizontal': '#656B70',
+      'fixed-lat-tilt': '#235789',
+      'single-axis-ew': '#B87D14',
+      'single-axis-ns': '#1B6B53',
+      'dual-axis-helios': '#D95326'
+    };
+    var YIELD_DASH = {
+      'single-axis-ew': '5,3',
+      'single-axis-ns': '2,2'
+    };
+    var REGIME_SHORT = {
+      'horizontal': 'Horizontal',
+      'fixed-lat-tilt': 'Fixed tilt',
+      'single-axis-ew': '1-axis E-W',
+      'single-axis-ns': '1-axis N-S',
+      'dual-axis-helios': 'Dual-axis'
+    };
+
+    function labText(id, text) {
+      var el = doc.getElementById(id);
+      if (el) {
+        el.textContent = text;
+      }
+    }
+
+    function setVerifyOut(text, tone) {
+      var el = doc.getElementById('lab-verify-out');
+      if (!el) {
+        return;
+      }
+      el.textContent = text;
+      el.classList.remove('ok', 'bad');
+      if (tone) {
+        el.classList.add(tone);
+      }
+    }
+
+    function resolvedLatitude() {
+      if (lab.latitudeOption === 'workbench') {
+        return wb.state.latitude;
+      }
+      var v = parseFloat(lab.latitudeOption);
+      return isFinite(v) ? v : wb.state.latitude;
+    }
+
+    function currentMu() {
+      if (lab.material === 'custom') {
+        return lab.customMu;
+      }
+      var m = L.materialById(lab.material);
+      return m ? m.mu : 0.15;
+    }
+
+    function currentHashState() {
+      return {
+        lat: resolvedLatitude(),
+        day: wb.state.dayOfYear,
+        reg: lab.regime,
+        mat: lab.material,
+        mu: currentMu(),
+        teeth: wb.state.teeth,
+        mod: wb.state.module
+      };
+    }
+
+    function stampedBrief() {
+      lastHash = L.encodeHashState(currentHashState());
+      lastStamped = briefCache.briefFor(currentHashState());
+      return lastStamped;
+    }
+
+    /* ------------------------------------------------- comparator table */
+
+    function renderYieldTable(comp) {
+      var tbody = doc.getElementById('lab-yield-tbody');
+      if (!tbody) {
+        return;
+      }
+      var rows = comp.rows.map(function (row) {
+        var sel = row.id === lab.regime ? ' class="is-highlighted"' : '';
+        return '<tr data-regime="' + row.id + '"' + sel + ' tabindex="0" role="button" ' +
+          'aria-pressed="' + (row.id === lab.regime ? 'true' : 'false') + '">' +
+          '<td><strong>' + row.label + '</strong></td>' +
+          '<td>' + row.annualKwhM2.toFixed(0) + '</td>' +
+          '<td>' + (row.gainVsFixedTiltPct >= 0 ? '+' : '') + row.gainVsFixedTiltPct.toFixed(1) + '%</td>' +
+          '<td>' + row.solsticePeakElevationDeg.toFixed(1) + ' deg</td>' +
+          '<td>' + (row.minAirMass === null ? '--' : row.minAirMass.toFixed(2)) + '</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = rows.join('');
+    }
+
+    function renderBenchTable() {
+      var tbody = doc.getElementById('lab-bench-tbody');
+      if (!tbody) {
+        return;
+      }
+      var bench = L.latitudeBenchmark({ stepMinutes: 30 });
+      tbody.innerHTML = bench.map(function (b) {
+        var dir = b.latitude >= 0 ? 'N' : 'S';
+        return '<tr>' +
+          '<td>' + Math.abs(b.latitude).toFixed(1) + ' deg ' + dir + '</td>' +
+          '<td>' + b.annual['dual-axis-helios'].toFixed(0) + '</td>' +
+          '<td>' + b.annual['fixed-lat-tilt'].toFixed(0) + '</td>' +
+          '<td>+' + b.gainVsFixedTiltPct.toFixed(1) + '%</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    /* ---------------------------------------------------- yield svg */
+
+    function renderYieldSvg(comp) {
+      var svg = doc.getElementById('lab-yield-svg');
+      if (!svg) {
+        return;
+      }
+      var LFT = 46, RGT = 552, TOP = 12, BOT = 202;
+      var vmax = 0.001;
+      comp.monthly.forEach(function (m) {
+        L.REGIME_IDS.forEach(function (id) {
+          if (m.energies[id] > vmax) {
+            vmax = m.energies[id];
+          }
+        });
+      });
+      var xFor = function (i) { return LFT + (i / 11) * (RGT - LFT); };
+      var yFor = function (v) { return BOT - (v / vmax) * (BOT - TOP); };
+      var parts = [];
+
+      [0.25, 0.5, 0.75, 1].forEach(function (f) {
+        var gy = yFor(vmax * f);
+        parts.push('<line x1="' + LFT + '" y1="' + gy.toFixed(1) + '" x2="' + RGT + '" y2="' + gy.toFixed(1) + '" stroke="rgba(20,22,24,0.10)" stroke-width="0.8"/>');
+        parts.push('<text x="' + (LFT - 4) + '" y="' + (gy + 2.6).toFixed(1) + '" text-anchor="end" fill="#656B70" font-family="IBM Plex Mono, monospace" font-size="7">' + (vmax * f).toFixed(1) + '</text>');
+      });
+      parts.push('<line x1="' + LFT + '" y1="' + BOT + '" x2="' + RGT + '" y2="' + BOT + '" stroke="#141618" stroke-width="1"/>');
+      parts.push('<line x1="' + LFT + '" y1="' + TOP + '" x2="' + LFT + '" y2="' + BOT + '" stroke="#141618" stroke-width="1"/>');
+      parts.push('<text x="8" y="' + TOP + 6 + '" fill="#656B70" font-family="IBM Plex Mono, monospace" font-size="7">kWh/m2 day</text>');
+
+      comp.rows.forEach(function (row) {
+        var pts = comp.monthly.map(function (m, i) {
+          return (i === 0 ? 'M' : 'L') + xFor(i).toFixed(1) + ',' + yFor(m.energies[row.id]).toFixed(1);
+        }).join(' ');
+        var w = row.id === lab.regime ? 2.6 : 1.4;
+        var dash = YIELD_DASH[row.id] ? ' stroke-dasharray="' + YIELD_DASH[row.id] + '"' : '';
+        var op = row.id === lab.regime ? '1' : '0.62';
+        parts.push('<path d="' + pts + '" fill="none" stroke="' + YIELD_COLORS[row.id] + '" stroke-width="' + w + '"' + dash + ' opacity="' + op + '"/>');
+      });
+
+      /* 12 keyboard-focusable month ticks on the selected regime curve. */
+      comp.monthly.forEach(function (m, i) {
+        var energy = m.energies[lab.regime];
+        var cx = xFor(i), cy = yFor(energy);
+        var active = lab.month === i;
+        parts.push('<g class="lab-tick" data-month="' + i + '" tabindex="0" role="button" aria-label="Show ' + m.month + ' detail">');
+        parts.push('<title>' + m.month + ' (day ' + m.dayOfYear + '): ' + energy.toFixed(2) + ' kWh/m2 ' + REGIME_SHORT[lab.regime] + '</title>');
+        parts.push('<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (active ? 6 : 4) +
+          '" fill="' + (active ? '#D95326' : '#F5F3EC') + '" stroke="#D95326" stroke-width="1.4"/>');
+        parts.push('<text x="' + cx.toFixed(1) + '" y="' + (BOT + 12) + '" text-anchor="middle" fill="#656B70" font-family="IBM Plex Mono, monospace" font-size="7">' + m.month + '</text>');
+        parts.push('</g>');
+      });
+      if (lab.month >= 0 && lab.month < 12) {
+        var mx = xFor(lab.month);
+        parts.push('<line x1="' + mx.toFixed(1) + '" y1="' + TOP + '" x2="' + mx.toFixed(1) + '" y2="' + BOT + '" stroke="rgba(217,83,38,0.35)" stroke-width="0.9" stroke-dasharray="2,3"/>');
+      }
+      svg.innerHTML = parts.join('');
+
+      var legend = doc.getElementById('lab-yield-legend');
+      if (legend) {
+        legend.innerHTML = comp.rows.map(function (row) {
+          return '<span><span class="lab-swatch" style="background:' + YIELD_COLORS[row.id] + '"></span>' + REGIME_SHORT[row.id] + '</span>';
+        }).join('');
+      }
+    }
+
+    /* ----------------------------------------------------- worm svg */
+
+    function renderWormSvg(worm, sweep, boundary) {
+      var svg = doc.getElementById('lab-worm-svg');
+      if (!svg) {
+        return;
+      }
+      var LFT = 46, RGT = 552, TOP = 12, BOT = 202;
+      var muMin = boundary.muMin, muMax = boundary.muMax;
+      var amax = Math.max(boundary.curve[boundary.curve.length - 1].frictionAngleDeg, boundary.leadAngleDeg * 1.25, 1);
+      var xFor = function (mu) { return LFT + ((mu - muMin) / (muMax - muMin)) * (RGT - LFT); };
+      var yFor = function (deg) { return BOT - (deg / amax) * (BOT - TOP); };
+      var parts = [];
+
+      [0.1, 0.2, 0.3, 0.4].forEach(function (mu) {
+        if (mu > muMin && mu < muMax) {
+          var gx = xFor(mu);
+          parts.push('<line x1="' + gx.toFixed(1) + '" y1="' + TOP + '" x2="' + gx.toFixed(1) + '" y2="' + BOT + '" stroke="rgba(20,22,24,0.08)" stroke-width="0.8"/>');
+        }
+        parts.push('<text x="' + xFor(mu).toFixed(1) + '" y="' + (BOT + 12) + '" text-anchor="middle" fill="#656B70" font-family="IBM Plex Mono, monospace" font-size="7">' + mu.toFixed(1) + '</text>');
+      });
+      parts.push('<line x1="' + LFT + '" y1="' + BOT + '" x2="' + RGT + '" y2="' + BOT + '" stroke="#141618" stroke-width="1"/>');
+      parts.push('<line x1="' + LFT + '" y1="' + TOP + '" x2="' + LFT + '" y2="' + BOT + '" stroke="#141618" stroke-width="1"/>');
+      parts.push('<text x="8" y="' + (TOP + 6) + '" fill="#656B70" font-family="IBM Plex Mono, monospace" font-size="7">deg</text>');
+      parts.push('<text x="' + RGT + '" y="' + (BOT + 12) + '" text-anchor="end" fill="#656B70" font-family="IBM Plex Mono, monospace" font-size="7">mu</text>');
+
+      var lambdaY = yFor(boundary.leadAngleDeg);
+
+      /* Self-locking region: between phi curve and lambda line where phi > lambda. */
+      var lockPts = [];
+      var started = false;
+      boundary.curve.forEach(function (p) {
+        if (p.mu >= boundary.boundaryMu) {
+          lockPts.push({ x: xFor(p.mu), y: yFor(p.frictionAngleDeg) });
+          started = true;
+        }
+      });
+      if (lockPts.length > 1) {
+        var poly = lockPts.map(function (p) { return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ') +
+          ' ' + xFor(muMax).toFixed(1) + ',' + lambdaY.toFixed(1) +
+          ' ' + xFor(boundary.boundaryMu).toFixed(1) + ',' + lambdaY.toFixed(1);
+        parts.push('<polygon points="' + poly + '" fill="rgba(27,107,83,0.10)" stroke="none"/>');
+      }
+      if (!started) {
+        parts.push('<text x="' + ((LFT + RGT) / 2) + '" y="' + ((TOP + BOT) / 2) + '" text-anchor="middle" fill="#B03A16" font-family="IBM Plex Mono, monospace" font-size="8">no self-locking range in window</text>');
+      }
+
+      var curvePts = boundary.curve.map(function (p, i) {
+        return (i === 0 ? 'M' : 'L') + xFor(p.mu).toFixed(1) + ',' + yFor(p.frictionAngleDeg).toFixed(1);
+      }).join(' ');
+      parts.push('<path d="' + curvePts + '" fill="none" stroke="#1B6B53" stroke-width="2"/>');
+      parts.push('<line x1="' + LFT + '" y1="' + lambdaY.toFixed(1) + '" x2="' + RGT + '" y2="' + lambdaY.toFixed(1) + '" stroke="#235789" stroke-width="1.6" stroke-dasharray="6,3"/>');
+      parts.push('<text x="' + RGT + '" y="' + (lambdaY - 4).toFixed(1) + '" text-anchor="end" fill="#235789" font-family="IBM Plex Mono, monospace" font-size="7">lead angle ' + boundary.leadAngleDeg.toFixed(2) + ' deg</text>');
+
+      /* Boundary mu vertical marker */
+      var bx = xFor(boundary.boundaryMu);
+      parts.push('<line x1="' + bx.toFixed(1) + '" y1="' + TOP + '" x2="' + bx.toFixed(1) + '" y2="' + BOT + '" stroke="rgba(20,22,24,0.22)" stroke-width="0.9" stroke-dasharray="2,3"/>');
+      parts.push('<text x="' + bx.toFixed(1) + '" y="' + (TOP + 8) + '" text-anchor="middle" fill="#141618" font-family="IBM Plex Mono, monospace" font-size="7">mu*=' + boundary.boundaryMu.toFixed(3) + '</text>');
+
+      /* Material markers (clickable) at their mu on the phi curve. */
+      sweep.rows.forEach(function (row) {
+        var cx = xFor(row.mu), cy = yFor(row.frictionAngleDeg);
+        var active = row.id === lab.material;
+        var fill = row.selfLocking ? '#1B6B53' : '#B03A16';
+        parts.push('<g class="lab-tick" data-material="' + row.id + '" tabindex="0" role="button" aria-label="Select ' + row.id + '">');
+        parts.push('<title>' + row.id + ': mu ' + row.mu + ', phi ' + row.frictionAngleDeg.toFixed(2) + ' deg, ' +
+          (row.selfLocking ? 'self-locks +' + row.lockMarginDeg.toFixed(2) + ' deg' : 'back-drivable ' + row.lockMarginDeg.toFixed(2) + ' deg') + '</title>');
+        parts.push('<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (active ? 6 : 4) + '" fill="' + fill + '" stroke="#F5F3EC" stroke-width="1.4"/>');
+        parts.push('</g>');
+      });
+
+      /* Active mu marker (diamond) */
+      var mu = currentMu();
+      var mx = xFor(mu), my = yFor(worm.frictionAngleDeg);
+      var d = 6;
+      parts.push('<polygon points="' + mx.toFixed(1) + ',' + (my - d).toFixed(1) + ' ' + (mx + d).toFixed(1) + ',' + my.toFixed(1) + ' ' + mx.toFixed(1) + ',' + (my + d).toFixed(1) + ' ' + (mx - d).toFixed(1) + ',' + my.toFixed(1) +
+        '" fill="#D95326" stroke="#F5F3EC" stroke-width="1.4"/>');
+
+      svg.innerHTML = parts.join('');
+
+      var legend = doc.getElementById('lab-worm-legend');
+      if (legend) {
+        legend.innerHTML =
+          '<span><span class="lab-swatch" style="background:#1B6B53"></span>friction angle phi(mu)</span>' +
+          '<span><span class="lab-swatch" style="background:#235789"></span>lead angle lambda</span>' +
+          '<span><span class="lab-swatch" style="background:#1B6B53;opacity:0.25"></span>self-locking region</span>' +
+          '<span><span class="lab-swatch" style="background:#B03A16"></span>back-drivable marker</span>';
+      }
+    }
+
+    /* --------------------------------------------------------- audit grid */
+
+    function renderAudit() {
+      var grid = doc.getElementById('lab-audit-grid');
+      if (!grid) {
+        return;
+      }
+      var a = L.auditManifold({
+        module: wb.state.module,
+        teeth: wb.state.teeth,
+        wallThickness: wb.state.wallThickness
+      });
+      var cells = E.PART_IDS.map(function (id) {
+        var p = a.parts[id];
+        var cls = p.isWatertight ? 'ok' : 'bad';
+        return '<div class="lab-audit-cell"><strong>' + id + '</strong>' +
+          'V ' + p.vertexCount + ' E ' + p.edgeCount + ' F ' + p.faceCount + '<br>' +
+          'chi ' + p.eulerCharacteristic + ' | shells ' + p.shells + ' | genus ' + p.genus + '<br>' +
+          '<span class="' + cls + '">' + (p.isWatertight ? 'watertight' : 'defects found') + '</span>' +
+          ' ' + p.volume.toFixed(0) + ' mm3</div>';
+      });
+      var pcb = L.auditPcb(HW);
+      cells.push('<div class="lab-audit-cell"><strong>pcb</strong>' +
+        pcb.placedCount + '/' + pcb.componentCount + ' placed | ' + pcb.pinsChecked + ' pins<br>' +
+        pcb.netCount + ' nets | ' + pcb.noConnectCount + ' no-connect | ' + pcb.bomLines + ' BOM lines<br>' +
+        '<span class="' + (pcb.clean ? 'ok' : 'bad') + '">' + (pcb.clean ? 'clean' : 'violations') + '</span> placements in bounds</div>');
+      grid.innerHTML = cells.join('');
+      labText('lab-audit-tally', a.allWatertight ? '6/6 watertight' : 'manifold defects');
+    }
+
+    /* ------------------------------------------------------------ render */
+
+    function refresh() {
+      var lat = resolvedLatitude();
+      var latDir = lat >= 0 ? 'N' : 'S';
+      labText('lab-lat-out', 'lat ' + Math.abs(lat).toFixed(1) + ' deg ' + latDir +
+        (lab.latitudeOption === 'workbench' ? ' (workbench)' : ''));
+
+      var comp = L.compareRegimes({ latitude: lat, stepMinutes: 18 });
+      renderYieldTable(comp);
+      renderBenchTable();
+      renderYieldSvg(comp);
+
+      var monthRow = lab.month >= 0 && lab.month < 12 && comp.monthly.length === 12 ? comp.monthly[lab.month] : null;
+      labText('lab-month-readout', monthRow
+        ? monthRow.month + ' day ' + monthRow.dayOfYear + ': ' + monthRow.energies[lab.regime].toFixed(2) + ' kWh/m2 ' + REGIME_SHORT[lab.regime]
+        : 'all 12 Klein days');
+      labText('lab-yield-note', 'Spencer 1971 + Meinel clear-sky beam, 12 Klein representative days, step 18 min; full-year parity < 2%. No clouds or diffuse.');
+
+      var worm = L.computeWormLock({
+        module: wb.state.module,
+        teeth: wb.state.teeth,
+        wormStarts: 1,
+        diameterQuotient: 10,
+        pressureAngle: 20,
+        mu: currentMu()
+      });
+      var sweep = L.sweepWormMaterials({
+        module: wb.state.module,
+        teeth: wb.state.teeth,
+        customMu: lab.material === 'custom' ? lab.customMu : undefined
+      });
+      var boundary = L.wormBoundaryCurve({
+        module: wb.state.module,
+        teeth: wb.state.teeth,
+        muMin: 0, muMax: 0.45, steps: 90
+      });
+      renderWormSvg(worm, sweep, boundary);
+      labText('lab-worm-readout', 'lambda ' + worm.leadAngleDeg.toFixed(2) + ' deg vs phi ' + worm.frictionAngleDeg.toFixed(2) +
+        ' deg | ' + (worm.selfLocking ? 'self-locks +' + worm.lockMarginDeg.toFixed(2) + ' deg' : 'back-drivable ' + worm.lockMarginDeg.toFixed(2) + ' deg'));
+      labText('lab-mu-out', 'mu = ' + currentMu().toFixed(2));
+      setHidden(doc.getElementById('lab-custom-mu-group'), lab.material !== 'custom');
+
+      renderAudit();
+
+      var stamped = stampedBrief();
+      labText('lab-digest', 'sha256: ' + stamped.digest);
+      labText('lab-digest-badge', 'sha256: ' + stamped.digest.slice(0, 18) + '...');
+    }
+
+    /* -------------------------------------------------------- actions */
+
+    function selectRegime(id) {
+      if (L.REGIME_IDS.indexOf(id) >= 0 && id !== lab.regime) {
+        lab.regime = id;
+        refresh();
+      }
+    }
+
+    function selectMonth(i) {
+      var idx = Math.floor(i);
+      if (idx === lab.month) {
+        lab.month = -1;
+      } else if (idx >= 0 && idx < 12) {
+        lab.month = idx;
+      } else {
+        return;
+      }
+      refresh();
+    }
+
+    function setLatitudeOption(v) {
+      if (v === 'workbench' || (isFinite(parseFloat(v)) && Math.abs(parseFloat(v)) <= 65)) {
+        lab.latitudeOption = v;
+        refresh();
+      }
+    }
+
+    function setMaterial(id) {
+      if (id === 'custom' || L.materialById(id)) {
+        lab.material = id;
+        refresh();
+      }
+    }
+
+    function setCustomMu(v) {
+      var mu = parseFloat(v);
+      if (isFinite(mu)) {
+        lab.customMu = Math.min(0.40, Math.max(0.05, mu));
+        refresh();
+      }
+    }
+
+    function exportBrief(kind) {
+      var stamped = stampedBrief();
+      if (kind === 'json') {
+        triggerBlobDownload('helios-lab-brief.json', L.briefToJson(stamped), 'application/json;charset=utf-8');
+      } else if (kind === 'csv') {
+        triggerBlobDownload('helios-lab-brief.csv', L.briefToCsv(stamped), 'text/csv;charset=utf-8');
+      } else if (kind === 'md') {
+        triggerBlobDownload('helios-lab-brief.md', L.briefToMarkdown(stamped), 'text/markdown;charset=utf-8');
+      }
+      return stamped.digest;
+    }
+
+    function shareLink() {
+      var base = (typeof window !== 'undefined' && window.location && window.location.href)
+        ? window.location.href.split('#')[0] : '';
+      return base + '#' + L.encodeHashState(currentHashState());
+    }
+
+    function copyShareLink() {
+      var link = shareLink();
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(link).then(function () {
+          setVerifyOut('bookmark link copied to clipboard', 'ok');
+          return link;
+        }).catch(function () {
+          setVerifyOut(link, null);
+          return link;
+        });
+      }
+      setVerifyOut(link, null);
+      return Promise.resolve(link);
+    }
+
+    function verifyDigest() {
+      var res = L.verifyBrief(stampedBrief());
+      setVerifyOut(res.ok ? 'digest verified: payload intact' : 'digest MISMATCH: payload tampered', res.ok ? 'ok' : 'bad');
+      return res;
+    }
+
+    function tamperDemo() {
+      var demo = L.demonstrateTamper(stampedBrief());
+      setVerifyOut('tamper caught: expected ' + demo.verify.expected.slice(0, 12) + '..., recomputed ' +
+        (demo.verify.actual || 'none').slice(0, 12) + '...', demo.verify.ok ? 'ok' : 'bad');
+      return demo.verify;
+    }
+
+    function runSelfTests() {
+      var res = L.runSelfTests(E, HW);
+      lab.testResults = res;
+      var list = doc.getElementById('lab-test-list');
+      if (list) {
+        list.innerHTML = res.results.map(function (r) {
+          return '<li><span class="' + (r.ok ? 'st-ok' : 'st-fail') + '">' + (r.ok ? 'PASS' : 'FAIL') + '</span>' +
+            '<span><strong>' + r.id + '</strong> ' + r.name + '<br>' + r.detail + '</span></li>';
+        }).join('');
+      }
+      labText('lab-test-tally', res.passed + '/' + res.total + ' passing');
+      return res;
+    }
+
+    /* ------------------------------------------------------ hash codec */
+
+    function applyHash(hashStr) {
+      if (typeof hashStr !== 'string' || hashStr.length === 0 || hashStr === '#') {
+        return false;
+      }
+      var decoded = L.decodeHashState(hashStr);
+      if (!decoded) {
+        setVerifyOut('malformed #hc= bookmark ignored', 'bad');
+        return false;
+      }
+      if (decoded.lat !== undefined) {
+        wb.state.latitude = decoded.lat;
+        lab.latitudeOption = 'workbench';
+      }
+      if (decoded.day !== undefined) {
+        wb.state.dayOfYear = decoded.day;
+      }
+      if (decoded.reg !== undefined) {
+        lab.regime = decoded.reg;
+      }
+      if (decoded.mat !== undefined) {
+        lab.material = decoded.mat;
+      }
+      if (decoded.mu !== undefined) {
+        lab.customMu = decoded.mu;
+      }
+      if (decoded.teeth !== undefined) {
+        wb.state.teeth = decoded.teeth;
+      }
+      if (decoded.mod !== undefined) {
+        wb.state.module = decoded.mod;
+      }
+      var latSel = doc.getElementById('lab-latitude');
+      if (latSel) {
+        latSel.value = lab.latitudeOption;
+      }
+      var matSel = doc.getElementById('lab-material');
+      if (matSel) {
+        matSel.value = lab.material;
+      }
+      var muInput = doc.getElementById('lab-mu');
+      if (muInput) {
+        muInput.value = String(lab.customMu);
+      }
+      if (typeof wb.syncSlidersFromState === 'function') {
+        wb.syncSlidersFromState();
+      }
+      wb.updateAll();
+      setVerifyOut('bookmark state restored', 'ok');
+      return true;
+    }
+
+    /* --------------------------------------------------------- events */
+
+    function bindLab() {
+      var latSel = doc.getElementById('lab-latitude');
+      if (latSel) {
+        latSel.addEventListener('change', function () { setLatitudeOption(latSel.value); });
+        latSel.addEventListener('input', function () { setLatitudeOption(latSel.value); });
+      }
+      var matSel = doc.getElementById('lab-material');
+      if (matSel) {
+        matSel.addEventListener('change', function () { setMaterial(matSel.value); });
+        matSel.addEventListener('input', function () { setMaterial(matSel.value); });
+      }
+      var muInput = doc.getElementById('lab-mu');
+      if (muInput) {
+        muInput.addEventListener('input', function () { setCustomMu(muInput.value); });
+      }
+
+      var tbody = doc.getElementById('lab-yield-tbody');
+      if (tbody) {
+        tbody.addEventListener('click', function (ev) {
+          var t = ev.target;
+          while (t && t !== tbody) {
+            if (t.getAttribute && t.getAttribute('data-regime')) {
+              selectRegime(t.getAttribute('data-regime'));
+              return;
+            }
+            t = t.parentNode;
+          }
+        });
+        tbody.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') {
+            return;
+          }
+          var t = ev.target;
+          if (t.getAttribute && t.getAttribute('data-regime')) {
+            ev.preventDefault();
+            selectRegime(t.getAttribute('data-regime'));
+          }
+        });
+      }
+
+      var yieldSvg = doc.getElementById('lab-yield-svg');
+      if (yieldSvg) {
+        yieldSvg.addEventListener('click', function (ev) {
+          var t = ev.target;
+          while (t && t !== yieldSvg) {
+            if (t.getAttribute && t.getAttribute('data-month')) {
+              selectMonth(parseInt(t.getAttribute('data-month'), 10));
+              return;
+            }
+            t = t.parentNode;
+          }
+        });
+        yieldSvg.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') {
+            return;
+          }
+          var t = ev.target;
+          if (t.getAttribute && t.getAttribute('data-month')) {
+            ev.preventDefault();
+            selectMonth(parseInt(t.getAttribute('data-month'), 10));
+          }
+        });
+      }
+
+      var wormSvg = doc.getElementById('lab-worm-svg');
+      if (wormSvg) {
+        wormSvg.addEventListener('click', function (ev) {
+          var t = ev.target;
+          while (t && t !== wormSvg) {
+            if (t.getAttribute && t.getAttribute('data-material')) {
+              setMaterial(t.getAttribute('data-material'));
+              return;
+            }
+            t = t.parentNode;
+          }
+        });
+        wormSvg.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') {
+            return;
+          }
+          var t = ev.target;
+          if (t.getAttribute && t.getAttribute('data-material')) {
+            ev.preventDefault();
+            setMaterial(t.getAttribute('data-material'));
+          }
+        });
+      }
+
+      function on(id, fn) {
+        var el = doc.getElementById(id);
+        if (el) {
+          el.addEventListener('click', fn);
+        }
+      }
+      on('lab-export-json', function () { exportBrief('json'); });
+      on('lab-export-csv', function () { exportBrief('csv'); });
+      on('lab-export-md', function () { exportBrief('md'); });
+      on('lab-copy-link', function () { copyShareLink(); });
+      on('lab-verify', function () { verifyDigest(); });
+      on('lab-tamper', function () { tamperDemo(); });
+      on('lab-run-tests', function () { runSelfTests(); });
+    }
+
+    labRefreshListeners.push(refresh);
+    bindLab();
+    refresh();
+
+    return {
+      state: lab,
+      refresh: refresh,
+      selectRegime: selectRegime,
+      selectMonth: selectMonth,
+      setLatitudeOption: setLatitudeOption,
+      setMaterial: setMaterial,
+      setCustomMu: setCustomMu,
+      exportBrief: exportBrief,
+      shareLink: shareLink,
+      copyShareLink: copyShareLink,
+      verifyDigest: verifyDigest,
+      tamperDemo: tamperDemo,
+      runSelfTests: runSelfTests,
+      applyHash: applyHash,
+      currentHashState: currentHashState,
+      stamped: function () { return lastStamped; },
+      lastHash: function () { return lastHash; }
+    };
+  }
+
+  function boot() {
+    window.heliosWorkbench = initWorkbench(document, window.HeliosEngine, window.HeliosHardware);
+    try {
+      if (window.HeliosLab && window.heliosWorkbench) {
+        window.heliosLab = initLab(document, window.HeliosEngine, window.HeliosHardware, window.HeliosLab, window.heliosWorkbench);
+        if (window.heliosLab) {
+          var sec = document.getElementById('lab-section');
+          setHidden(sec, false);
+          if (window.location && window.location.hash) {
+            window.heliosLab.applyHash(window.location.hash);
+          }
+        }
+      }
+    } catch (e) {
+      /* The lab is additive: any init fault leaves the workbench untouched. */
+      window.heliosLab = null;
+    }
+  }
+
   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.HeliosEngine && window.HeliosHardware) {
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function () {
-        window.heliosWorkbench = initWorkbench(document, window.HeliosEngine, window.HeliosHardware);
-      });
+      document.addEventListener('DOMContentLoaded', boot);
     } else {
-      window.heliosWorkbench = initWorkbench(document, window.HeliosEngine, window.HeliosHardware);
+      boot();
     }
   }
 
@@ -1170,6 +1864,7 @@
     PRESETS: PRESETS,
     dayOfYearToLabel: dayOfYearToLabel,
     solarHourToClockLabel: solarHourToClockLabel,
-    initWorkbench: initWorkbench
+    initWorkbench: initWorkbench,
+    initLab: initLab
   };
 }));

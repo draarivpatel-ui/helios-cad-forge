@@ -488,6 +488,138 @@
         </div>
       </div>
     </section>
+
+    <!-- Solar Yield & Kinematics Lab: rendered by app.js when helios-lab.js is present -->
+    <section class="panel lab-section" id="lab-section" aria-labelledby="lab-title" hidden>
+      <div class="panel-header">
+        <h2 class="panel-title" id="lab-title"><span class="panel-index">06</span> Solar Yield &amp; Kinematics Lab</h2>
+        <div class="mono lab-digest-badge" id="lab-digest-badge">sha256: computing</div>
+      </div>
+      <div class="panel-body">
+        <div class="lab-grid">
+          <div class="lab-col">
+            <div class="control-section lab-block">
+              <h3 class="section-heading">
+                <span>5-Regime Annual Clear-Sky Comparator</span>
+                <span class="mono" id="lab-lat-out">lat --</span>
+              </h3>
+              <div class="slider-group">
+                <div class="slider-label-row">
+                  <label for="lab-latitude">Benchmark latitude</label>
+                </div>
+                <select id="lab-latitude" class="lab-select" aria-label="Benchmark latitude for the yield comparator">
+                  <option value="workbench" selected>Workbench latitude (live)</option>
+                  <option value="0">0.0 deg (equator)</option>
+                  <option value="29.6">29.6 deg N</option>
+                  <option value="40.7">40.7 deg N</option>
+                  <option value="55.7">55.7 deg N</option>
+                </select>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table lab-yield-table">
+                  <thead>
+                    <tr>
+                      <th>Tracking Regime</th>
+                      <th>Annual kWh/m2</th>
+                      <th>vs Fixed Tilt</th>
+                      <th>Solstice Peak El</th>
+                      <th>Min Air Mass</th>
+                    </tr>
+                  </thead>
+                  <tbody id="lab-yield-tbody"></tbody>
+                </table>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table lab-bench-table">
+                  <thead>
+                    <tr>
+                      <th>Canonical Latitude</th>
+                      <th>Dual-Axis kWh/m2</th>
+                      <th>Fixed Tilt kWh/m2</th>
+                      <th>Dual Gain</th>
+                    </tr>
+                  </thead>
+                  <tbody id="lab-bench-tbody"></tbody>
+                </table>
+              </div>
+              <div class="mono lab-footnote" id="lab-yield-note"></div>
+            </div>
+            <div class="control-section lab-block">
+              <h3 class="section-heading">
+                <span>12-Month Clear-Sky Irradiance</span>
+                <span class="mono" id="lab-month-readout">all 12 Klein days</span>
+              </h3>
+              <svg id="lab-yield-svg" viewBox="0 0 560 250" role="img" aria-label="Twelve-month clear-sky irradiance curves for five tracking regimes"></svg>
+              <div class="mono lab-legend" id="lab-yield-legend"></div>
+            </div>
+          </div>
+          <div class="lab-col">
+            <div class="control-section lab-block">
+              <h3 class="section-heading">
+                <span>Worm Self-Locking Boundary</span>
+                <span class="mono" id="lab-worm-readout"></span>
+              </h3>
+              <div class="slider-group">
+                <div class="slider-label-row">
+                  <label for="lab-material">Worm material pair</label>
+                </div>
+                <select id="lab-material" class="lab-select" aria-label="Worm material pair for self-locking sweep">
+                  <option value="dry-pla">PLA worm, dry (mu 0.25)</option>
+                  <option value="lubed-petg">PETG worm, PTFE lube (mu 0.10)</option>
+                  <option value="nylon-steel">Nylon worm, dry (mu 0.30)</option>
+                  <option value="bronze-steel" selected>Bronze worm, oiled (mu 0.15)</option>
+                  <option value="hardened-steel">Hardened steel pair, greased (mu 0.08)</option>
+                  <option value="custom">Custom mu</option>
+                </select>
+              </div>
+              <div class="slider-group" id="lab-custom-mu-group" hidden>
+                <div class="slider-label-row">
+                  <label for="lab-mu">Custom friction coefficient</label>
+                  <output class="slider-readout" id="lab-mu-out" for="lab-mu">mu = 0.15</output>
+                </div>
+                <input type="range" id="lab-mu" min="0.05" max="0.40" step="0.01" value="0.15">
+              </div>
+              <svg id="lab-worm-svg" viewBox="0 0 560 250" role="img" aria-label="Worm-gear self-locking boundary chart: friction angle versus coefficient of friction"></svg>
+              <div class="mono lab-legend" id="lab-worm-legend"></div>
+            </div>
+            <div class="control-section lab-block">
+              <h3 class="section-heading">
+                <span>6-Body Manifold + 48-Part PCB Audit</span>
+                <span class="mono" id="lab-audit-tally"></span>
+              </h3>
+              <div class="lab-audit-grid" id="lab-audit-grid"></div>
+            </div>
+            <div class="control-section lab-block">
+              <h3 class="section-heading">
+                <span>Audited Engineering Brief</span>
+              </h3>
+              <div class="lab-export-bar">
+                <div class="mono lab-digest" id="lab-digest">sha256: computing</div>
+                <div class="mono lab-verify-out" id="lab-verify-out">digest unverified</div>
+              </div>
+              <div class="toolbar-group lab-toolbar">
+                <button type="button" class="btn preset-btn" id="lab-export-json" title="Download digest-stamped engineering brief (.json)">JSON</button>
+                <button type="button" class="btn preset-btn" id="lab-export-csv" title="Download formula-safe digest-stamped brief (.csv)">CSV</button>
+                <button type="button" class="btn preset-btn" id="lab-export-md" title="Download digest-stamped brief (.md)">Markdown</button>
+                <button type="button" class="btn preset-btn" id="lab-copy-link" title="Copy a #hc= bookmark link restoring this lab state">Copy #hc= Link</button>
+                <button type="button" class="btn preset-btn" id="lab-verify" title="Recompute the payload digest and compare">Verify Digest</button>
+                <button type="button" class="btn preset-btn" id="lab-tamper" title="Mutate one payload value and show the digest catches it">Tamper Demo</button>
+              </div>
+            </div>
+            <div class="control-section lab-block">
+              <h3 class="section-heading">
+                <span>Deterministic Self-Tests</span>
+                <span class="mono" id="lab-test-tally">18 checks</span>
+              </h3>
+              <div class="toolbar-group lab-toolbar">
+                <button type="button" class="btn preset-btn" id="lab-run-tests" title="Run all in-page deterministic self-tests">Run Self-Tests</button>
+              </div>
+              <ol class="lab-test-list" id="lab-test-list"></ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -504,6 +636,7 @@
 
   <script src="engine.js"></script>
   <script src="hardware.js"></script>
+  <script src="helios-lab.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
