@@ -1251,3 +1251,9 @@ test('remaining public helpers validate finite input', function () {
   assert.throws(function () { E.computeSolarPosition(); }, /latitude/);
   assert.throws(function () { E.computeSunPath(); }, /stepMinutes|latitude/);
 });
+
+test('L567 validateMeshManifold rejects malformed mesh containers fail-closed', () => {
+  for (const bad of [null, undefined, {}, { vertices: null, faces: [] }, { vertices: [], faces: null }]) {
+    assert.throws(() => E.validateMeshManifold(bad), /mesh/i);
+  }
+});

@@ -1216,3 +1216,14 @@ test('helios-lab.js UMD export exposes every documented surface', () => {
   assert.equal(L.MONTHS.length, 12);
   assert.equal(L.CANONICAL_LATITUDES.length, 4);
 });
+
+/* L567 regression tests: canonical serialization and export edge cases */
+test('L567 stableStringify rejects cyclic structures with a deterministic error', () => {
+  const cyclic = { a: 1 };
+  cyclic.self = cyclic;
+  assert.throws(() => L.stableStringify(cyclic), /cyclic/i);
+});
+
+test('L567 csvSafeCell quotes embedded carriage returns as line breaks', () => {
+  assert.equal(L.csvSafeCell('a\rb'), '"a\rb"');
+});

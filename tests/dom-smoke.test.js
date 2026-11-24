@@ -976,3 +976,7 @@ test('lab CSS carries no external fonts, images or smooth scrolling', () => {
   assert.equal(/scroll-behavior/.test(labCss), false);
   assert.equal(/@font-face|url\(/.test(labCss), false);
 });
+
+test('L567 skip-link target main landmark can receive programmatic focus', () => {
+  assert.match(htmlSource, /<main id="main-workbench"[^>]*tabindex="-1"/);
+});

@@ -963,6 +963,9 @@
    * positive. genus is derived from V - E + F = 2 * shells - 2 * genus.
    */
   function validateMeshManifold(mesh) {
+    if (!mesh || typeof mesh !== 'object' || !Array.isArray(mesh.vertices) || !Array.isArray(mesh.faces)) {
+      fail('mesh must be an object with vertices and faces arrays');
+    }
     var edgeUse = {};
     var directed = {};
     var used = {};

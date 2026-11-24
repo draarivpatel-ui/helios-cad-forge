@@ -842,6 +842,9 @@
 
   /** Deterministic JSON: sorted keys, no undefined/functions, -0 folded to 0. */
   function stableStringify(value) {
+    return stableStringifyInner(value, []);
+  }
+  function stableStringifyInner(value, active) {
     if (value === null || typeof value === 'number' || typeof value === 'boolean' ||
         typeof value === 'string') {
       if (typeof value === 'number') {
@@ -852,13 +855,17 @@
       }
       return JSON.stringify(value);
     }
-    if (Array.isArray(value)) {
-      return '[' + value.map(stableStringify).join(',') + ']';
-    }
     if (typeof value === 'object') {
+      if (active.indexOf(value) >= 0) {
+        fail('cannot serialize a cyclic structure');
+      }
+      var nextActive = active.concat([value]);
+      if (Array.isArray(value)) {
+        return '[' + value.map(function (v) { return stableStringifyInner(v, nextActive); }).join(',') + ']';
+      }
       var keys = Object.keys(value).sort();
       var parts = keys.map(function (k) {
-        return JSON.stringify(k) + ':' + stableStringify(value[k]);
+        return JSON.stringify(k) + ':' + stableStringifyInner(value[k], nextActive);
       });
       return '{' + parts.join(',') + '}';
     }
@@ -1128,7 +1135,7 @@
     if (/^[=+\-@\t\r]/.test(s)) {
       s = "'" + s;
     }
-    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   }
 
   /** Flatten a stamped brief into [section, key, value] CSV rows. */
