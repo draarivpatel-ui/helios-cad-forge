@@ -14,7 +14,8 @@
   --ink-secondary: #3B4045;
   --ink-muted: #656B70;
   --accent-orange: #D95326;
-  --accent-orange-hover: #BF4319;
+  --accent-orange-hover: #9A3410;
+  --accent-orange-press: #8F3010;
   --accent-orange-soft: rgba(217, 83, 38, 0.13);
   --accent-green: #1B6B53;
   --accent-green-soft: rgba(27, 107, 83, 0.13);
@@ -138,16 +139,6 @@ th,
   gap: 10px;
 }
 
-.brand-version {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: var(--radius-sm);
-  background: var(--accent-orange);
-  color: #FFFFFF;
-}
-
 .header-actions {
   display: flex;
   flex-wrap: wrap;
@@ -210,9 +201,9 @@ th,
 }
 
 .btn-primary {
-  background: var(--accent-orange);
+  background: var(--accent-orange-press);
   color: #FFFFFF;
-  border-color: var(--accent-orange);
+  border-color: var(--accent-orange-press);
 }
 
 .btn-primary:hover {
@@ -283,7 +274,7 @@ th,
 .spec-stat-label {
   display: block;
   font-size: 0.76rem;
-  color: var(--ink-muted);
+  color: var(--ink-secondary);
   margin-bottom: 2px;
 }
 
@@ -406,7 +397,7 @@ th,
 .slider-readout {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--accent-orange);
+  color: var(--accent-orange-hover);
   background: var(--bg-vellum);
   padding: 1px 6px;
   border-radius: var(--radius-sm);
@@ -802,9 +793,12 @@ input[type="range"]:focus-visible {
 }
 
 .data-table a {
-  color: var(--accent-orange);
+  color: var(--accent-orange-hover);
   font-weight: 600;
   text-decoration: none;
+  display: inline-block;
+  min-height: 24px;
+  line-height: 24px;
 }
 
 .data-table a:hover {

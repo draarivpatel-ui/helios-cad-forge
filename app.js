@@ -1071,22 +1071,37 @@
 
       // Inspector tabs
       var tabBtns = doc.querySelectorAll('[data-tab]');
-      Array.prototype.forEach.call(tabBtns, function (btn) {
-        btn.addEventListener('click', function () {
-          var tab = btn.getAttribute('data-tab');
-          state.activeTab = tab;
-          Array.prototype.forEach.call(tabBtns, function (b) {
-            var active = (b === btn);
-            b.classList.toggle('is-active', active);
-            b.setAttribute('aria-selected', active ? 'true' : 'false');
-          });
-          ['bom', 'pinout', 'scad'].forEach(function (t) {
-            var panel = doc.getElementById('tab-panel-' + t);
-            if (panel) {
-              panel.classList.toggle('hidden', t !== tab);
-            }
-          });
+      function selectTab(btn) {
+        if (!btn) return;
+        var tab = btn.getAttribute('data-tab');
+        state.activeTab = tab;
+        Array.prototype.forEach.call(tabBtns, function (b) {
+          var active = (b === btn);
+          b.classList.toggle('is-active', active);
+          b.setAttribute('aria-selected', active ? 'true' : 'false');
+          b.tabIndex = active ? 0 : -1;
         });
+        ['bom', 'pinout', 'scad'].forEach(function (t) {
+          var panel = doc.getElementById('tab-panel-' + t);
+          if (panel) {
+            panel.classList.toggle('hidden', t !== tab);
+          }
+        });
+      }
+      Array.prototype.forEach.call(tabBtns, function (btn, idx) {
+        btn.addEventListener('click', function () { selectTab(btn); });
+        btn.addEventListener('keydown', function (ev) {
+          var next = null;
+          if (ev.key === 'ArrowRight') next = tabBtns[(idx + 1) % tabBtns.length];
+          else if (ev.key === 'ArrowLeft') next = tabBtns[(idx - 1 + tabBtns.length) % tabBtns.length];
+          else if (ev.key === 'Home') next = tabBtns[0];
+          else if (ev.key === 'End') next = tabBtns[tabBtns.length - 1];
+          else return;
+          ev.preventDefault();
+          selectTab(next);
+          next.focus();
+        });
+        btn.tabIndex = btn.getAttribute('aria-selected') === 'true' ? 0 : -1;
       });
 
       // Search input for BOM & Pinout
