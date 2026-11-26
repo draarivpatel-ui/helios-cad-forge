@@ -1130,9 +1130,12 @@
 
   function csvSafeCell(value) {
     var s = String(value === null || value === undefined ? '' : value);
-    // Formula-injection guard: a cell that opens with = + - @ or a control
-    // character gets a leading apostrophe so spreadsheet apps keep it text.
-    if (/^[=+\-@\t\r]/.test(s)) {
+    // Formula-injection guard: a cell whose first visible character is a
+    // formula lead, or which opens with tab or CR, stays text in spreadsheets.
+    var lead = (/^[\s\p{Cf}\p{Cc}]*/u.exec(s) || [''])[0];
+    var first = s.charAt(lead.length);
+    var plainNumber = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(s.slice(lead.length));
+    if (lead.length > 0 || (first !== '' && '=+-@'.indexOf(first) !== -1 && !(first === '-' && plainNumber))) {
       s = "'" + s;
     }
     return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -1266,10 +1269,10 @@
   }
 
   function stripDigest(stamped) {
-    var payload = {};
+    var payload = Object.create(null);
     Object.keys(stamped).forEach(function (k) {
       if (k !== 'digest') {
-        payload[k] = stamped[k];
+        Object.defineProperty(payload, k, { value: stamped[k], enumerable: true, writable: true, configurable: true });
       }
     });
     return payload;
@@ -1463,8 +1466,8 @@
       };
     });
     check('csv-formula', 'CSV formula-injection escaping', function () {
-      var probe = csvSafeCell('=CMD()') + ',' + csvSafeCell('+SUM(1)') + ',' + csvSafeCell('@x') + ',' + csvSafeCell('-1');
-      return { ok: probe === "'=CMD(),'+SUM(1),'@x,'-1", detail: probe };
+      var probe = csvSafeCell('=CMD()') + ',' + csvSafeCell('+SUM(1)') + ',' + csvSafeCell('@x') + ',' + csvSafeCell('-1x');
+      return { ok: probe === "'=CMD(),'+SUM(1),'@x,'-1x", detail: probe };
     });
     check('tamper-detect', 'tamper detection catches a mutated payload', function () {
       var stamped = stampBrief({ schema: BRIEF_SCHEMA, probe: 1 });

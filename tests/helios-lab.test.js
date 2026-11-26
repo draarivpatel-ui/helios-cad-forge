@@ -859,7 +859,7 @@ test('demonstrateTamper keeps the stale digest so verification fails', () => {
 test('csvSafeCell escapes formula-injection prefixes', () => {
   assert.equal(L.csvSafeCell('=CMD()'), "'=CMD()");
   assert.equal(L.csvSafeCell('+1+1'), "'+1+1");
-  assert.equal(L.csvSafeCell('-5'), "'-5");
+  assert.equal(L.csvSafeCell('-5'), '-5');
   assert.equal(L.csvSafeCell('@name'), "'@name");
   assert.equal(L.csvSafeCell('\t=1'), "'\t=1");
   assert.equal(L.csvSafeCell('plain'), 'plain');
